@@ -1,0 +1,35 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Use Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: wire-av-app/package-lock.json
+      - name: Clear npm cache
+        run: npm cache clean --force || true
+      - name: Install dependencies
+        working-directory: wire-av-app
+        run: npm ci
+      - name: Build app
+        working-directory: wire-av-app
+        run: npm run build --if-present
+      - name: Lint app
+        working-directory: wire-av-app
+        run: npm run lint --if-present
