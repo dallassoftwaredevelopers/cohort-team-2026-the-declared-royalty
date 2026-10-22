@@ -3,12 +3,12 @@ name: Java CI
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - 'backend/**'
+#    paths:
+#      - 'backend/**'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - 'backend/**'
+#    paths:
+#      - 'backend/**'
 
 jobs:
   build:
