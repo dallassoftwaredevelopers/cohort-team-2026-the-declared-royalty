@@ -26,6 +26,9 @@ invoice-automation/
 ├── .gitignore
 ├── .gitattributes
 ├── frontend/                     # React application
+    ├── public/                   # Static assets (favicons, icons, etc.)
+    ├── src/                      # Source code (Components, Pages, Assets)
+    ├── package.json              # Frontend dependencies and npm scripts
 └── backend/                      # Spring Boot application
     ├── pom.xml                   # Maven dependencies and code generators
     ├── mvnw / mvnw.cmd           # Maven wrapper
@@ -41,7 +44,13 @@ invoice-automation/
 
 ## Local Environment Setup
 
-### 1. Start Infrastructure (PostgreSQL & MinIO)
+### 1. Prerequisites
+Ensure you have the following installed on your local machine:
+*   [Node.js](https://nodejs.org) (v18+ recommended)
+*   [Java 17+](https://adoptium.net)
+*   [Docker Desktop](https://docker.com)
+
+### 2. Start Infrastructure (PostgreSQL & MinIO)
 
 From the repository root, start the supporting containers:
 
@@ -186,6 +195,16 @@ From the `backend/` directory:
 ```bash
 ./mvnw clean spring-boot:run
 
+```
+
+---
+
+## Running the Frontend
+
+From the `frontend/` directory, install dependencies and launch the hot-reloading development server:
+```bash
+npm install
+npm run dev
 ```
 
 ---
