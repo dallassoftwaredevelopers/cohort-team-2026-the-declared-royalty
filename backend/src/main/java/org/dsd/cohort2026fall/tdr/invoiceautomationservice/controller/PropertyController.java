@@ -63,3 +63,5 @@ public class PropertyController implements PropertiesApi {
         return response;
     }
 }
+
+//test
