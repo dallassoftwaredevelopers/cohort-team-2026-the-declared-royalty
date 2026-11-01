@@ -164,7 +164,7 @@
                         </goals>
                         <configuration>
                             <!-- Location of the root contract -->
-                            <inputSpec>./openapi.yaml</inputSpec>
+                            <inputSpec>${project.basedir}/openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
                             <library>spring-boot</library>
                             <apiPackage>org.dsd.cohort2026fall.tdr.invoiceautomationservice.api</apiPackage>
