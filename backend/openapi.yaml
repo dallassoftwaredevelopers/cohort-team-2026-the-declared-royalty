@@ -234,7 +234,7 @@ components:
         role:
           type: string
           default: "ADMIN"
-        isActive:
+        status:
           type: string
           default: "ACTIVE"
     UserUpdateRequest:
@@ -247,7 +247,7 @@ components:
           format: email
         role:
           type: string
-        isActive:
+        status:
           type: string
 
     UserResponse:
@@ -266,7 +266,7 @@ components:
           type: string
         role:
           type: string
-        isActive:
+        status:
           type: string
         createdAt:
           type: string
