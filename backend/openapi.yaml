@@ -418,6 +418,13 @@ components:
           type: string
         paymentMethod:
           $ref: '#/components/schemas/PaymentMethod'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     UserCreateRequest:
       type: object
       required:
