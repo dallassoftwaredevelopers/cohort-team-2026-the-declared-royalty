@@ -30,7 +30,7 @@ async function request<T>(
   options: RequestInit = {},
   withAuth: boolean,
 ): Promise<T> {
-  let authHeaders = {};
+  const authHeaders = {};
   if (withAuth) {
     // authHeaders = await getAuthHeader();
   }
