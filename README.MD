@@ -196,6 +196,11 @@ From the `backend/` directory:
 ./mvnw clean spring-boot:run
 
 ```
+From the root directory, you can run/redeploy the backend only with:
+
+```bash
+docker compose up -d --build backend
+```
 
 ---
 
@@ -208,6 +213,15 @@ npm run dev
 ```
 
 ---
+
+## Running the Full Application Stack
+
+From the root directory, you can run both backend and frontend concurrently using:
+
+```bash
+docker compose up -d --build
+````
+
 
 ## Health Checks & Diagnostic Endpoints
 

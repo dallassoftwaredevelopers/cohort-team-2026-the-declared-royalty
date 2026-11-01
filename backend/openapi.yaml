@@ -65,6 +65,105 @@ paths:
                 $ref: '#/components/schemas/PropertyResponse'
         '404':
           description: Property not found
+  /api/v1/users:
+    post:
+      summary: Create a new user
+      operationId: createUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    get:
+      summary: List all users
+      operationId: getUsers
+      tags:
+        - Users
+      responses:
+        '200':
+          description: A list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+  /api/v1/users/{userId}:
+    get:
+      summary: Get user by UserId
+      operationId: getUserByUserId
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+    put:
+      summary: Update user by UserId
+      operationId: updateUserByUserId
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+    delete:
+      summary: Deactivate a user by UserId
+      operationId: deactivateUserByUserId
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User deactivated successfully
+        '404':
+          description: User not found
 
   /api/v1/vendors:
     get:
@@ -319,6 +418,55 @@ components:
           type: string
         paymentMethod:
           $ref: '#/components/schemas/PaymentMethod'
+    UserCreateRequest:
+      type: object
+      required:
+        - username
+        - email
+      #        - password
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          default: "ADMIN"
+        isActive:
+          type: string
+          default: "ACTIVE"
+    UserUpdateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        isActive:
+          type: string
+
+    UserResponse:
+      type: object
+      required:
+        - userId
+        - createdAt
+        - updatedAt
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        isActive:
+          type: string
         createdAt:
           type: string
           format: date-time

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.OffsetDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -22,9 +23,6 @@ public class UserEntity {
     @Column(name = "user_name", nullable = false)
     private String userName;
 
-//    @Column(name = "password", nullable = false)
-//    private String password;
-
     @Column(name = "email", nullable = false)
     private String email;
 
@@ -35,6 +33,12 @@ public class UserEntity {
     @Builder.Default
     @Column(name = "status", nullable = false)
     private String status = "ACTIVE";
+
+    @ManyToMany
+    @JoinTable(name = "user_properties",
+            joinColumns = @JoinColumn(name = "user_uuid"),
+            inverseJoinColumns = @JoinColumn(name = "property_uuid"))
+    private Set<PropertyEntity> properties;
 
     @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
