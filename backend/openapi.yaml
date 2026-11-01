@@ -165,7 +165,116 @@ paths:
         '404':
           description: User not found
 
+  /api/v1/vendors:
+    get:
+      summary: List all vendors
+      operationId: getVendors
+      tags:
+        - Vendors
+      responses:
+        '200':
+          description: A list of vendors (empty array when none exist)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VendorResponse'
+
+    post:
+      summary: Create a new vendor
+      operationId: createVendor
+      tags:
+        - Vendors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorCreateRequest'
+      responses:
+        '201':
+          description: Vendor created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/vendors/{vendorUuid}:
+    get:
+      summary: Get vendor by UUID
+      operationId: getVendorByUuid
+      tags:
+        - Vendors
+      parameters:
+        - $ref: '#/components/parameters/VendorUuid'
+      responses:
+        '200':
+          description: Vendor found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorResponse'
+        '404':
+          description: Vendor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update a vendor
+      description: >
+        Partial update of the vendor's editable fields. Only fields present in the request
+        are changed; omitted or null fields keep their current value.
+        vendorUuid and createdAt are never changed; updatedAt is set to the current time.
+      operationId: updateVendor
+      tags:
+        - Vendors
+      parameters:
+        - $ref: '#/components/parameters/VendorUuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorUpdateRequest'
+      responses:
+        '200':
+          description: Vendor updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Vendor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
+  parameters:
+    VendorUuid:
+      name: vendorUuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
   schemas:
     PropertyCreateRequest:
       type: object
@@ -219,6 +328,98 @@ components:
         status:
           type: string
           example: "ACTIVE"
+
+    VendorStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+
+    PaymentMethod:
+      type: string
+      enum:
+        - ACH
+        - CHECK
+        - CREDIT_CARD
+
+    VendorCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: "Acme Plumbing Co."
+        phoneNumber:
+          type: string
+          maxLength: 255
+          example: "555-123-4567"
+        status:
+          description: Defaults to ACTIVE when omitted.
+          allOf:
+            - $ref: '#/components/schemas/VendorStatus'
+        paymentUrl:
+          type: string
+          maxLength: 225
+          example: "https://pay.acmeplumbing.com"
+        paymentMethod:
+          description: Defaults to ACH when omitted.
+          allOf:
+            - $ref: '#/components/schemas/PaymentMethod'
+
+    VendorUpdateRequest:
+      type: object
+      description: >
+        Partial update of a vendor. All fields are optional; omitted or null fields are left unchanged.
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: "Acme Plumbing Co."
+        phoneNumber:
+          type: string
+          maxLength: 255
+          example: "555-123-4567"
+        status:
+          $ref: '#/components/schemas/VendorStatus'
+        paymentUrl:
+          type: string
+          maxLength: 225
+          example: "https://pay.acmeplumbing.com"
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+
+    VendorResponse:
+      type: object
+      required:
+        - vendorUuid
+        - name
+        - status
+        - paymentMethod
+        - createdAt
+        - updatedAt
+      properties:
+        vendorUuid:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phoneNumber:
+          type: string
+        status:
+          $ref: '#/components/schemas/VendorStatus'
+        paymentUrl:
+          type: string
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
     UserCreateRequest:
       type: object
       required:
@@ -272,5 +473,29 @@ components:
           type: string
           format: date-time
         updatedAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+        - message
+        - timestamp
+      properties:
+        status:
+          type: integer
+          example: 404
+        error:
+          type: string
+          example: "Not Found"
+        message:
+          type: string
+          example: "Vendor not found: 3f2b7c1e-8a4d-4c55-9b0e-2d6f1a7e9c10"
+        path:
+          type: string
+          example: "/api/v1/vendors/3f2b7c1e-8a4d-4c55-9b0e-2d6f1a7e9c10"
+        timestamp:
           type: string
           format: date-time
