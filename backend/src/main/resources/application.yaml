@@ -26,4 +26,4 @@ management:
       show-details: always
 
 frontend:
-  url: ${FRONTEND_URL}
+  url: ${FRONTEND_URL:http://localhost:5173}
