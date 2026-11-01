@@ -65,6 +65,8 @@ class VendorControllerTest {
                 .andExpect(jsonPath("$.name").value("Acme Plumbing"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.paymentMethod").value("ACH"))
+                .andExpect(jsonPath("$.phoneNumber").value("NULL"))
+                .andExpect(jsonPath("$.paymentUrl").value("NULL"))
                 .andExpect(jsonPath("$.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.updatedAt").isNotEmpty());
     }
@@ -144,7 +146,7 @@ class VendorControllerTest {
     }
 
     @Test
-    void updateVendor_replacesFieldsAndKeepsIdentity() throws Exception {
+    void updateVendor_updatesProvidedFieldsAndKeepsIdentity() throws Exception {
         UUID id = UUID.randomUUID();
         when(vendorRepository.findById(id)).thenReturn(Optional.of(existingVendor(id)));
         when(vendorRepository.save(any(VendorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -157,20 +159,63 @@ class VendorControllerTest {
                 .andExpect(jsonPath("$.name").value("Acme Renamed"))
                 .andExpect(jsonPath("$.status").value("INACTIVE"))
                 .andExpect(jsonPath("$.paymentMethod").value("ACH"))
-                // omitted optional fields are cleared (full replacement)
-                .andExpect(jsonPath("$.phoneNumber").doesNotExist())
-                .andExpect(jsonPath("$.paymentUrl").doesNotExist())
+                // omitted fields keep their existing values (partial update)
+                .andExpect(jsonPath("$.phoneNumber").value("555-123-4567"))
+                .andExpect(jsonPath("$.paymentUrl").value("https://pay.acme.com"))
                 .andExpect(jsonPath("$.createdAt").value("2026-01-01T00:00:00Z"))
                 .andExpect(jsonPath("$.updatedAt").value(not("2026-01-01T00:00:00Z")));
     }
 
     @Test
-    void updateVendor_missingRequiredField_returns400() throws Exception {
+    void updateVendor_singleField_leavesOthersUnchanged() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(vendorRepository.findById(id)).thenReturn(Optional.of(existingVendor(id)));
+        when(vendorRepository.save(any(VendorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/v1/vendors/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\":\"555-999-0000\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").value("555-999-0000"))
+                .andExpect(jsonPath("$.name").value("Acme Plumbing"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.paymentUrl").value("https://pay.acme.com"))
+                .andExpect(jsonPath("$.paymentMethod").value("CHECK"));
+    }
+
+    @Test
+    void updateVendor_nullKeywordClearsAndEmptyStringLeavesUnchanged() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(vendorRepository.findById(id)).thenReturn(Optional.of(existingVendor(id)));
+        when(vendorRepository.save(any(VendorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/v1/vendors/{id}", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"phoneNumber\":\"Null\",\"paymentUrl\":\"\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.phoneNumber").doesNotExist())
+                .andExpect(jsonPath("$.paymentUrl").value("https://pay.acme.com"));
+    }
+
+    @Test
+    void createVendor_nullStringClearsAndEmptyStringStoresPlaceholder() throws Exception {
+        when(vendorRepository.save(any(VendorEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(post("/api/v1/vendors")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Acme\",\"phoneNumber\":\"\",\"paymentUrl\":\"NULL\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.phoneNumber").value("NULL"))
+                .andExpect(jsonPath("$.paymentUrl").doesNotExist());
+    }
+
+    @Test
+    void updateVendor_invalidEnum_returns400() throws Exception {
         UUID id = UUID.randomUUID();
 
         mockMvc.perform(put("/api/v1/vendors/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Acme\"}"))
+                        .content("{\"status\":\"DELETED\"}"))
                 .andExpect(status().isBadRequest());
         verify(vendorRepository, never()).save(any());
     }

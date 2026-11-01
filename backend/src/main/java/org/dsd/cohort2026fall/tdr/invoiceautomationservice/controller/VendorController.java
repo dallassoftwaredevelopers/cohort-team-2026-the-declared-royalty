@@ -21,6 +21,9 @@ import java.util.UUID;
 @RestController
 public class VendorController implements VendorsApi {
 
+    // Stored in place of a missing or empty phoneNumber or paymentUrl; sending it explicitly clears the column
+    private static final String MISSING_VALUE = "NULL";
+
     private final VendorRepository vendorRepository;
 
     public VendorController(VendorRepository vendorRepository) {
@@ -45,9 +48,9 @@ public class VendorController implements VendorsApi {
         VendorEntity entity = new VendorEntity();
         entity.setVendorId(UUID.randomUUID());
         entity.setName(request.getName());
-        entity.setPhoneNumber(request.getPhoneNumber());
+        entity.setPhoneNumber(toStored(request.getPhoneNumber()));
         entity.setStatus(status.getValue());
-        entity.setPaymentUrl(request.getPaymentUrl());
+        entity.setPaymentUrl(toStored(request.getPaymentUrl()));
         entity.setPaymentMethod(paymentMethod.getValue());
         entity.setCreatedAt(now);
         entity.setUpdatedAt(now);
@@ -65,17 +68,41 @@ public class VendorController implements VendorsApi {
     public ResponseEntity<VendorResponse> updateVendor(UUID vendorUuid, VendorUpdateRequest request) {
         VendorEntity entity = findVendor(vendorUuid);
 
-        // Full replacement: optional fields omitted from the request are cleared.
+        // Partial update: only fields present in the request are changed; omitted (null) fields keep their value.
         // vendorId and createdAt are intentionally left untouched.
-        entity.setName(request.getName());
-        entity.setPhoneNumber(request.getPhoneNumber());
-        entity.setStatus(request.getStatus().getValue());
-        entity.setPaymentUrl(request.getPaymentUrl());
-        entity.setPaymentMethod(request.getPaymentMethod().getValue());
+        if (request.getName() != null) {
+            entity.setName(request.getName());
+        }
+        if (isProvided(request.getPhoneNumber())) {
+            entity.setPhoneNumber(nullIfNullKeyword(request.getPhoneNumber()));
+        }
+        if (request.getStatus() != null) {
+            entity.setStatus(request.getStatus().getValue());
+        }
+        if (isProvided(request.getPaymentUrl())) {
+            entity.setPaymentUrl(nullIfNullKeyword(request.getPaymentUrl()));
+        }
+        if (request.getPaymentMethod() != null) {
+            entity.setPaymentMethod(request.getPaymentMethod().getValue());
+        }
         entity.setUpdatedAt(now());
 
         VendorEntity saved = vendorRepository.save(entity);
         return ResponseEntity.ok(toResponse(saved));
+    }
+
+    // Create: null or "" -> "NULL" placeholder; "null" (any case) -> database null; anything else is stored as-is
+    private String toStored(String value) {
+        return isProvided(value) ? nullIfNullKeyword(value) : MISSING_VALUE;
+    }
+
+    // Update: null or "" means the field was not provided and is left unchanged
+    private boolean isProvided(String value) {
+        return value != null && !value.isEmpty();
+    }
+
+    private String nullIfNullKeyword(String value) {
+        return MISSING_VALUE.equalsIgnoreCase(value) ? null : value;
     }
 
     // Postgres stores microseconds; truncate so the response matches what later reads return
