@@ -2,6 +2,8 @@ package org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.PropertyResponse;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -44,4 +46,8 @@ public class PropertyEntity {
     @Builder.Default
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt = OffsetDateTime.now();
+
+    public PropertyResponse toResponse() {
+        return new PropertyResponse(propertyId, name, streetAddress, city, state, zipCode, status);
+    }
 }
