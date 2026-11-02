@@ -1,0 +1,33 @@
+get:
+  summary: List all properties
+  operationId: getProperties
+  tags:
+    - Properties
+  responses:
+    '200':
+      description: A list of managed properties
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas/PropertyResponse.yaml'
+
+post:
+  summary: Create a new property
+  operationId: createProperty
+  tags:
+    - Properties
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/PropertyCreateRequest.yaml'
+  responses:
+    '201':
+      description: Property created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PropertyResponse.yaml'

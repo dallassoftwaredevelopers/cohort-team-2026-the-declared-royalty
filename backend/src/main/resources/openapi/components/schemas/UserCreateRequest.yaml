@@ -1,0 +1,17 @@
+type: object
+required:
+  - username
+  - email
+#        - password
+properties:
+  username:
+    type: string
+  email:
+    type: string
+    format: email
+  role:
+    type: string
+    default: "ADMIN"
+  isActive:
+    type: string
+    default: "ACTIVE"

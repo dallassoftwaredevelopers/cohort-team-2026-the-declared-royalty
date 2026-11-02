@@ -1,0 +1,22 @@
+type: object
+required:
+  - status
+  - error
+  - message
+  - timestamp
+properties:
+  status:
+    type: integer
+    example: 404
+  error:
+    type: string
+    example: "Not Found"
+  message:
+    type: string
+    example: "Vendor not found: 3f2b7c1e-8a4d-4c55-9b0e-2d6f1a7e9c10"
+  path:
+    type: string
+    example: "/api/v1/vendors/3f2b7c1e-8a4d-4c55-9b0e-2d6f1a7e9c10"
+  timestamp:
+    type: string
+    format: date-time
