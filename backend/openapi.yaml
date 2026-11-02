@@ -265,6 +265,94 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/audit-logs:
+    post:
+      summary: Create a new Audit Log
+      operationId: createAuditLog
+      tags:
+        - Audit Logs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditLogCreateRequest'
+      responses:
+        '201':
+          description: Audit Log successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogResponse'
+    get:
+      summary: List all audit logs
+      operationId: getAuditLogs
+      tags:
+        - Audit Logs
+      parameters:
+        - name: invoice
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+          description: "Filter logs by a specific Invoice ID."
+          example: "7b8a9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
+        - name: actionType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Filter by specific action types (e.g., SYSTEM_PAID, USER_IDENTIFIED)."
+          example: "SYSTEM_IDENTIFIED"
+        - name: fromState
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Filter logs by the starting financial value or prior state signature."
+          example: "4000.00"
+        - name: toState
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Filter logs by the ending financial value or target state signature."
+          example: "4500.00"
+
+      responses:
+        '200':
+          description: A list of audit logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditLogResponse'
+
+  /api/v1/audit-logs/{auditUuid}:
+    get:
+      summary: Get audit log by ID
+      operationId: getAuditLogById
+      tags:
+        - Audit Logs
+      parameters:
+        - name: auditUuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Audit Log found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogResponse'
+        '404':
+          description: Audit Log not found
+
 components:
   parameters:
     VendorUuid:
@@ -497,5 +585,109 @@ components:
           type: string
           example: "/api/v1/vendors/3f2b7c1e-8a4d-4c55-9b0e-2d6f1a7e9c10"
         timestamp:
+          type: string
+          format: date-time
+
+
+    AuditLogCreateRequest:
+      type: object
+      required:
+        - invoice
+        - user
+        - actionType
+        - actionTaken
+        - fromState
+        - toState
+      properties:
+        invoice:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+          description: "The UUID of the authorizing user whose credentials and permissions were used."
+          example: "7b8a9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
+        actionType:
+          type: string
+          description: "Indicates the operation category, explicitly prefixing automated actions executed on behalf of a user"
+          enum:
+            # 1. INGESTED
+            - SYSTEM_INGESTED
+            - USER_INGESTED
+            # 2. IDENTIFIED
+            - SYSTEM_IDENTIFIED
+            - USER_IDENTIFIED
+            # 3. MATCHED
+            - SYSTEM_MATCHED
+            - USER_MATCHED
+            # 4. VALIDATED
+            - SYSTEM_VALIDATED
+            - USER_VALIDATED
+            # 5. APPROVED
+            - SYSTEM_APPROVED
+            - USER_APPROVED
+            # 6. PAID
+            - SYSTEM_PAID
+            - USER_PAID
+          example: "SYSTEM_MATCHED"
+        actionTaken:
+          type: string
+          example: "AI parsed invoice layout under user 7453 permissions."
+        fromState:
+          type: string
+          description: "The monetary value or prior transaction status before this operation."
+          example: "UNASSIGNED"
+        toState:
+          type: string
+          description: "The monetary value or prior transaction status after this operation."
+          example: "PROPERTY_ID_8820"
+        notes:
+          type: string
+          description: "Optional details about verification metrics, system flags, or user reasoning."
+          example: "User corrected the invoice total from original extraction of $4,000.00."
+
+
+    AuditLogResponse:
+      type: object
+      required:
+        - auditLogId
+        - invoice
+        - user
+        - actionType
+        - actionTaken
+        - fromState
+        - toState
+        - notes
+        - createdAt
+        - updatedAt
+      properties:
+        auditLogId:
+          type: string
+          format: uuid
+        invoice:
+          type: string
+          format: uuid
+        user:
+          type: string
+          format: uuid
+        actionType:
+          type: string
+          example: "SYSTEM_APPROVED"
+        actionTaken:
+          type: string
+          example: "System approved payment of bill"
+        fromState:
+          type: string
+          example: "DRAFT_AMOUNT: $4500.00"
+        toState:
+          type: string
+          example: "APPROVED_AMOUNT: $4500.00"
+        notes:
+          type: string
+          example: "Confidence score: 93%. System approved $4500.00 on 10/31/27."
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: string
           format: date-time
