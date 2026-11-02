@@ -22,7 +22,20 @@ services:
         condition: service_healthy
     networks:
       - backend
-      
+
+  # --- Frontend Layer ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: invoice-automation-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - backend
+
   # --- Database Layer ---
   postgres:
     image: postgres:16-alpine
