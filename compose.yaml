@@ -1,5 +1,8 @@
 services:
+  # --- Backend Layer ---
+  # Runs only when the "backend" profile is enabled; omit it to run the backend locally
   backend:
+    profiles: ["backend"]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -41,7 +44,9 @@ services:
       - ./frontend:/app
       - /app/node_modules # keep the container's Linux node_modules
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+        required: false # don't fail when the backend profile is off
 
   frontend:
     profiles: ["prod"]
@@ -53,7 +58,9 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+        required: false # don't fail when the backend profile is off
 
   # --- Database Layer ---
   postgres:
