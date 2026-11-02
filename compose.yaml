@@ -13,7 +13,7 @@ services:
       MINIO_ENDPOINT: minio:9000
       MINIO_USER: ${MINIO_USER}
       MINIO_PASSWORD: ${MINIO_PASSWORD}
-      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     ports:
       - "8080:8080"
     depends_on:
@@ -23,7 +23,38 @@ services:
         condition: service_healthy
     networks:
       - backend
-      
+
+  # --- Frontend Layer ---
+  # Enable one via COMPOSE_PROFILES in .env (dev or prod); both use port 5173
+  frontend-dev:
+    profiles: ["dev"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: invoice-automation-frontend-dev
+    environment:
+      VITE_USE_POLLING: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # keep the container's Linux node_modules
+    depends_on:
+      - backend
+
+  frontend:
+    profiles: ["prod"]
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: prod
+    container_name: invoice-automation-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
   # --- Database Layer ---
   postgres:
     image: postgres:16-alpine
