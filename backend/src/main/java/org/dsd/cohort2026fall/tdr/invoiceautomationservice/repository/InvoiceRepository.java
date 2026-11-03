@@ -22,3 +22,6 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, UUID>, J
     Optional<InvoiceEntity> findByMapping_Vendor_VendorIdAndVendorSuppliedInvoiceIdAndBillingPeriodEnd(
             UUID vendorId, String vendorSuppliedInvoiceId, LocalDate billingPeriodEnd);
 }
+
+    Optional<InvoiceEntity> findByVendorIdAndInvoiceNumberAndBillingPeriodEnd(UUID propertyId);
+}
