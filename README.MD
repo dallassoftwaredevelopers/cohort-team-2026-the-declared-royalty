@@ -22,13 +22,16 @@ A financial automation platform designed for property management portfolios to i
 ```text
 invoice-automation/
 ├── openapi.yaml                  # Root contract: single source of truth for REST APIs
-├── docker-compose.yml            # Local infrastructure (PostgreSQL & MinIO)
+├── compose.yaml                  # Docker Compose: infrastructure, backend & frontend (profile-based)
+├── .env                          # Local secrets & COMPOSE_PROFILES (gitignored)
 ├── .gitignore
 ├── .gitattributes
 ├── frontend/                     # React application
     ├── public/                   # Static assets (favicons, icons, etc.)
     ├── src/                      # Source code (Components, Pages, Assets)
     ├── package.json              # Frontend dependencies and npm scripts
+    ├── Dockerfile                # Multi-target image: `dev` (Vite hot reload) & `prod` (nginx)
+    ├── nginx.conf                # nginx config for the production image
 └── backend/                      # Spring Boot application
     ├── pom.xml                   # Maven dependencies and code generators
     ├── mvnw / mvnw.cmd           # Maven wrapper
@@ -50,12 +53,44 @@ Ensure you have the following installed on your local machine:
 *   [Java 17+](https://adoptium.net)
 *   [Docker Desktop](https://docker.com)
 
-### 2. Start Infrastructure (PostgreSQL & MinIO)
+### 2. Choose What Runs in Docker (Compose Profiles)
 
-From the repository root, start the supporting containers:
+PostgreSQL, MinIO, and pgAdmin always start. The backend and frontend containers are opt-in through **Compose profiles**, set with `COMPOSE_PROFILES` (comma-separated) in your root `.env`:
+
+```env
+# Frontend: dev (hot reload) or prod (nginx build). Add "backend" to run it in Docker.
+COMPOSE_PROFILES=dev,backend
+```
+
+| Profile | Service | Description |
+| --- | --- | --- |
+| `backend` | `backend` | Spring Boot API on `localhost:8080`. Leave it out to run the backend locally instead (see [Running the Backend](#running-the-backend)). |
+| `dev` | `frontend-dev` | Vite dev server with hot reload on `localhost:5173`. `./frontend` is bind-mounted into the container. |
+| `prod` | `frontend` | Production build served by nginx on `localhost:5173`. |
+
+Common setups:
+
+| `COMPOSE_PROFILES` | What runs in Docker |
+| --- | --- |
+| `dev,backend` | Everything, frontend with hot reload |
+| `dev` | Infrastructure + frontend; backend runs from your IDE / `mvnw` |
+| `prod,backend` | Full production-style stack |
+| *(empty)* | Infrastructure only |
+
+> `dev` and `prod` both use port `5173` (the backend's default CORS origin), so enable only one at a time.
+
+To override `.env` for a single run, pass `--profile` flags (these replace the `.env` value, not add to it):
 
 ```bash
-docker compose up -d
+docker compose --profile prod --profile backend up -d --build
+```
+
+### 3. Start the Containers
+
+From the repository root:
+
+```bash
+docker compose up -d --build
 
 ```
 
@@ -196,7 +231,10 @@ From the `backend/` directory:
 ./mvnw clean spring-boot:run
 
 ```
-From the root directory, you can run/redeploy the backend only with:
+
+> When running the backend locally, leave `backend` out of `COMPOSE_PROFILES` so the container doesn't also bind port `8080`. The local process doesn't receive the environment compose sets, so provide `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `MINIO_ENDPOINT=localhost:9000`, `MINIO_USER`, and `MINIO_PASSWORD` (values from `.env`) in your IDE run configuration or shell.
+
+From the root directory, you can run/redeploy the backend container only with (naming the service enables its profile automatically):
 
 ```bash
 docker compose up -d --build backend
@@ -206,21 +244,30 @@ docker compose up -d --build backend
 
 ## Running the Frontend
 
-From the `frontend/` directory, install dependencies and launch the hot-reloading development server:
+**Locally (fastest hot reload):** from the `frontend/` directory, install dependencies and launch the development server:
 ```bash
 npm install
 npm run dev
 ```
 
+**In Docker:** set `dev` (hot reload) or `prod` (nginx build) in `COMPOSE_PROFILES`, then from the root directory:
+```bash
+docker compose up -d --build
+```
+
+Either way the app is served at `http://localhost:5173`. The frontend calls the API at `http://localhost:8080` from your browser, so it works with the backend running either in Docker or locally.
+
+> The `dev` container enables file-watch polling (`VITE_USE_POLLING=true`) because file change events don't propagate through Docker bind mounts on Windows/macOS. Plain `npm run dev` is unaffected.
+
 ---
 
 ## Running the Full Application Stack
 
-From the root directory, you can run both backend and frontend concurrently using:
+Set `COMPOSE_PROFILES=dev,backend` (or `prod,backend`) in `.env`, then from the root directory:
 
 ```bash
 docker compose up -d --build
-````
+```
 
 
 ## Health Checks & Diagnostic Endpoints
@@ -233,14 +280,13 @@ Once the application is running on port `8080`, verify health and explore contra
 | **pgAdmin web console** | `http://localhost:5050` | PostgreSQL and FlyWay Migration monitoring |
 | **Interactive Swagger UI** | `http://localhost:8080/swagger-ui.html` | Interactive REST client and OpenAPI specification visualizer |
 | **Raw OpenAPI JSON Spec** | `http://localhost:8080/v3/api-docs` | Machine-readable API schema document for tooling |
-| **MinIO Object Console** | `http://localhost:9001` | Browser interface for raw invoice PDF BLOB storage
-
-|
+| **MinIO Object Console** | `http://localhost:9001` | Browser interface for raw invoice PDF BLOB storage |
+| **Frontend** | `http://localhost:5173` | React app (local `npm run dev`, or the `dev` / `prod` container) |
 
 ---
 
 ##  Development Checklist
 
-1. [ ] Ensure Docker daemon is active and run `docker compose up -d`.
+1. [ ] Ensure Docker daemon is active, set `COMPOSE_PROFILES` in `.env`, and run `docker compose up -d --build`.
 2. [ ] Run `cd backend && ./mvnw clean compile` to apply `V1__initial_schema.sql` to Postgres and generate OpenAPI models.
 3. [ ] Open `http://localhost:8080/swagger-ui.html` and verify the `/api/v1/properties` endpoints execute successfully against local database seed data.

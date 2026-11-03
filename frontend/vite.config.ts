@@ -13,5 +13,11 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
-  }
+  },
+  server: {
+    watch: {
+      // File events don't propagate through Docker bind mounts on Windows/macOS
+      usePolling: process.env.VITE_USE_POLLING === 'true',
+    },
+  },
 })
