@@ -1,0 +1,21 @@
+get:
+  summary: Get property by ID
+  operationId: getPropertyById
+  tags:
+    - Properties
+  parameters:
+    - name: propertyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Property found
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PropertyResponse.yaml'
+    '404':
+      description: Property not found

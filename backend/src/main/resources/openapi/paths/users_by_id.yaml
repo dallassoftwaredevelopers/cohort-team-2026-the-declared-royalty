@@ -1,0 +1,65 @@
+get:
+  summary: Get user by UserId
+  operationId: getUserByUserId
+  tags:
+    - Users
+  parameters:
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: User found
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UserResponse.yaml'
+    '404':
+      description: User not found
+put:
+  summary: Update user by UserId
+  operationId: updateUserByUserId
+  tags:
+    - Users
+  parameters:
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/UserUpdateRequest.yaml'
+  responses:
+    '200':
+      description: User updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/UserResponse.yaml'
+    '404':
+      description: User not found
+delete:
+  summary: Deactivate a user by UserId
+  operationId: deactivateUserByUserId
+  tags:
+    - Users
+  parameters:
+    - name: userId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: User deactivated successfully
+    '404':
+      description: User not found

@@ -1,0 +1,26 @@
+type: object
+required:
+  - propertyId
+  - name
+  - streetAddress
+  - city
+  - state
+  - zipCode
+  - status
+properties:
+  propertyId:
+    type: string
+    format: uuid
+  name:
+    type: string
+  streetAddress:
+    type: string
+  city:
+    type: string
+  state:
+    type: string
+  zipCode:
+    type: string
+  status:
+    type: string
+    example: "ACTIVE"

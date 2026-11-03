@@ -1,0 +1,20 @@
+type: object
+description: >
+  Partial update of a vendor. All fields are optional; omitted or null fields are left unchanged.
+properties:
+  name:
+    type: string
+    maxLength: 255
+    example: "Acme Plumbing Co."
+  phoneNumber:
+    type: string
+    maxLength: 255
+    example: "555-123-4567"
+  status:
+    $ref: './VendorStatus.yaml'
+  paymentUrl:
+    type: string
+    maxLength: 225
+    example: "https://pay.acmeplumbing.com"
+  paymentMethod:
+    $ref: './PaymentMethod.yaml'

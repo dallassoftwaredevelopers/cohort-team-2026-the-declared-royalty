@@ -1,0 +1,24 @@
+type: object
+required:
+  - name
+properties:
+  name:
+    type: string
+    maxLength: 255
+    example: "Acme Plumbing Co."
+  phoneNumber:
+    type: string
+    maxLength: 255
+    example: "555-123-4567"
+  status:
+    description: Defaults to ACTIVE when omitted.
+    allOf:
+      - $ref: './VendorStatus.yaml'
+  paymentUrl:
+    type: string
+    maxLength: 225
+    example: "https://pay.acmeplumbing.com"
+  paymentMethod:
+    description: Defaults to ACH when omitted.
+    allOf:
+      - $ref: './PaymentMethod.yaml'

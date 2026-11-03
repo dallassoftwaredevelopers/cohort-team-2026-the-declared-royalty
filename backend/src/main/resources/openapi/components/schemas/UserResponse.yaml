@@ -1,0 +1,23 @@
+type: object
+required:
+  - userId
+  - createdAt
+  - updatedAt
+properties:
+  userId:
+    type: string
+    format: uuid
+  username:
+    type: string
+  email:
+    type: string
+  role:
+    type: string
+  status:
+    type: string
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time

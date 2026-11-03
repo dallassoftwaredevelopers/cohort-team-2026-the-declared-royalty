@@ -1,0 +1,28 @@
+type: object
+required:
+  - vendorUuid
+  - name
+  - status
+  - paymentMethod
+  - createdAt
+  - updatedAt
+properties:
+  vendorUuid:
+    type: string
+    format: uuid
+  name:
+    type: string
+  phoneNumber:
+    type: string
+  status:
+    $ref: './VendorStatus.yaml'
+  paymentUrl:
+    type: string
+  paymentMethod:
+    $ref: './PaymentMethod.yaml'
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time

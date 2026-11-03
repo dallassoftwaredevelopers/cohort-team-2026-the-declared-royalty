@@ -21,26 +21,29 @@ A financial automation platform designed for property management portfolios to i
 
 ```text
 invoice-automation/
-├── openapi.yaml                  # Root contract: single source of truth for REST APIs
-├── compose.yaml                  # Docker Compose: infrastructure, backend & frontend (profile-based)
-├── .env                          # Local secrets & COMPOSE_PROFILES (gitignored)
+├── compose.yaml                  # Local infrastructure & multi-container orchestration
 ├── .gitignore
 ├── .gitattributes
 ├── frontend/                     # React application
-    ├── public/                   # Static assets (favicons, icons, etc.)
-    ├── src/                      # Source code (Components, Pages, Assets)
-    ├── package.json              # Frontend dependencies and npm scripts
-    ├── Dockerfile                # Multi-target image: `dev` (Vite hot reload) & `prod` (nginx)
+│   ├── Dockerfile                # Multi-target image: `dev` (Vite hot reload) & `prod` (nginx)
     ├── nginx.conf                # nginx config for the production image
+│   ├── public/                   # Static assets (favicons, icons, etc.)
+│   ├── src/                      # Source code (Components, Pages, Assets)
+│   └── package.json              # Frontend dependencies and npm scripts
 └── backend/                      # Spring Boot application
+    ├── Dockerfile                # Multi-stage Temurin JDK 21 build with ./mvnw
     ├── pom.xml                   # Maven dependencies and code generators
-    ├── mvnw / mvnw.cmd           # Maven wrapper
+    ├── mvnw / mvnw.cmd           # Maven wrapper (pins Apache Maven 3.10.0)
     └── src/main/
         ├── java/...              # Controllers, Entities, Repositories, Services
         └── resources/
             ├── application.yaml
-            └── db/migration/     # Flyway SQL migrations (V1__..., V2__...)
-
+            ├── application-test.yaml
+            ├── db/migration/     # Flyway SQL migrations (V1__..., V2__...)
+            └── openapi/          # Multi-file OpenAPI specification, single source of truth for REST APIs
+                ├── openapi.yaml  # Root contract
+                ├── paths/        # Modular path definitions
+                └── components/   # Modular schemas & parameters
 ```
 
 ---
@@ -49,9 +52,10 @@ invoice-automation/
 
 ### 1. Prerequisites
 Ensure you have the following installed on your local machine:
-*   [Node.js](https://nodejs.org) (v18+ recommended)
-*   [Java 17+](https://adoptium.net)
+*   [Node.js](https://nodejs.org) (v20+ or v22 recommended)
+*   [Java 21](https://adoptium.net) (pinned via `.sdkmanrc`: run `sdk env install`)
 *   [Docker Desktop](https://docker.com)
+*   **Maven:** Use the included Maven wrapper (`backend/mvnw`). No system Maven installation is required.
 
 ### 2. Choose What Runs in Docker (Compose Profiles)
 
@@ -169,43 +173,51 @@ Expand Servers ➔ Invoice DB Local ➔ Databases ➔ invoice_automation_postgre
 
 ## API Contract & Code Generation: OpenAPI & Swagger
 
-This project follows an **API Contract-First** development workflow. All endpoint interfaces and DTOs are defined in the root `openapi.yaml` and compiled directly into Java types for the backend and TypeScript types for the frontend.
+This project follows an **API Contract-First** development workflow. All endpoint interfaces and DTOs are defined in the modular OpenAPI specification located at `backend/src/main/resources/openapi/` and compiled directly into Java types for the backend.
 
-`openapi.yaml` Lives at the Root or Top Level
+### Modular Specification Layout
 
-** OpenAPI does not have a strict required location, but it is a best practice to place it in the project root for both frontend and backend access.**
+The contract is split into focused files using standard OpenAPI 3.0 `$ref` pointers:
 
-* **The Convention in Monorepos:**
-* Place `openapi.yaml` either in the **root directory** of the repository (`/openapi.yaml`) or in a shared documentation/contract folder (`/contracts/openapi.yaml` or `/docs/openapi.yaml`).
-* In `backend/pom.xml`, we point the openapi plugin to openapi path:
+*   **Root Contract:** `backend/src/main/resources/openapi/openapi.yaml` (contains `openapi`, `info`, `servers`, and top-level `$ref` references).
+*   **Paths:** `backend/src/main/resources/openapi/paths/` (e.g., `properties.yaml`, `properties_by_id.yaml`, `users.yaml`, `vendors.yaml`).
+*   **Schemas:** `backend/src/main/resources/openapi/components/schemas/` (one file per schema, e.g., `PropertyResponse.yaml`, `VendorResponse.yaml`).
+*   **Parameters:** `backend/src/main/resources/openapi/components/parameters/` (reusable path/query parameters such as `VendorUuid.yaml`).
+
+In `backend/pom.xml`, the `openapi-generator-maven-plugin` points to the root contract:
 ```xml
-<inputSpec>${project.basedir}/../openapi.yaml</inputSpec>
-
+<inputSpec>${project.basedir}/src/main/resources/openapi/openapi.yaml</inputSpec>
 ```
 
-* In `frontend/package.json`, the frontend script points to the exact same file:
-```json
-"generate-api": "openapi-typescript-codegen --input ../openapi.yaml --output ./src/api"
+> **Frontend Integration:** When generating TypeScript client types or SDKs, point your tooling to `backend/src/main/resources/openapi/openapi.yaml`.
 
-```
+### Adding an Endpoint or Schema
+
+1. Create a path definition file in `backend/src/main/resources/openapi/paths/<resource>.yaml`.
+2. Reference the file in `openapi.yaml` under `paths:`.
+3. If new data structures are needed, create schemas in `backend/src/main/resources/openapi/components/schemas/<SchemaName>.yaml` and reference them under `components.schemas:` in `openapi.yaml`.
+4. Run code generation:
+   ```bash
+   cd backend
+   ./mvnw clean compile
+   ```
+   *Note: `openapi-generator-maven-plugin` is bound to the `generate-sources` phase and declared before `maven-compiler-plugin`, guaranteeing that generated DTOs and API interfaces are generated and added to compile roots before javac compiles the application code.*
+5. Implement the generated interface in your controller (e.g., `public class PropertyController implements PropertiesApi`).
 
 ### Generating Java Interfaces and DTOs
 
-1. Define endpoints and data schemas in the root `/openapi.yaml`.
-2. Run the code generation plugin via Maven inside `backend/`:
+1. Run the code generation plugin via Maven inside `backend/`:
 
 ```bash
 cd backend
-./mvnw compile
-
+./mvnw clean compile
 ```
 
-3. **Output Location:** Generated files are written to:
+2. **Output Location:** Generated files are written to:
 ```text
 backend/target/generated-sources/openapi/src/main/java/org/dsd/cohort2026fall/tdr/
 ├── api/          # Spring @RestController interfaces (e.g., PropertiesApi.java)
 └── model/        # Request & Response DTOs (e.g., PropertyResponse.java)
-
 ```
 
 

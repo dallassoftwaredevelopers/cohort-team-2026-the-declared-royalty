@@ -1,0 +1,39 @@
+get:
+  summary: List all vendors
+  operationId: getVendors
+  tags:
+    - Vendors
+  responses:
+    '200':
+      description: A list of vendors (empty array when none exist)
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas/VendorResponse.yaml'
+
+post:
+  summary: Create a new vendor
+  operationId: createVendor
+  tags:
+    - Vendors
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/VendorCreateRequest.yaml'
+  responses:
+    '201':
+      description: Vendor created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/VendorResponse.yaml'
+    '400':
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'

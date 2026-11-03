@@ -1,0 +1,51 @@
+openapi: 3.0.3
+info:
+  title: Invoice Automation API
+  description: Core API contract for managing properties, vendors, and invoice lifecycles.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Local Development Server
+
+paths:
+  /api/v1/properties:
+    $ref: './paths/properties.yaml'
+  /api/v1/properties/{propertyId}:
+    $ref: './paths/properties_by_id.yaml'
+  /api/v1/users:
+    $ref: './paths/users.yaml'
+  /api/v1/users/{userId}:
+    $ref: './paths/users_by_id.yaml'
+  /api/v1/vendors:
+    $ref: './paths/vendors.yaml'
+  /api/v1/vendors/{vendorUuid}:
+    $ref: './paths/vendors_by_uuid.yaml'
+
+components:
+  parameters:
+    VendorUuid:
+      $ref: './components/parameters/VendorUuid.yaml'
+
+  schemas:
+    PropertyCreateRequest:
+      $ref: './components/schemas/PropertyCreateRequest.yaml'
+    PropertyResponse:
+      $ref: './components/schemas/PropertyResponse.yaml'
+    VendorStatus:
+      $ref: './components/schemas/VendorStatus.yaml'
+    PaymentMethod:
+      $ref: './components/schemas/PaymentMethod.yaml'
+    VendorCreateRequest:
+      $ref: './components/schemas/VendorCreateRequest.yaml'
+    VendorUpdateRequest:
+      $ref: './components/schemas/VendorUpdateRequest.yaml'
+    VendorResponse:
+      $ref: './components/schemas/VendorResponse.yaml'
+    UserCreateRequest:
+      $ref: './components/schemas/UserCreateRequest.yaml'
+    UserUpdateRequest:
+      $ref: './components/schemas/UserUpdateRequest.yaml'
+    UserResponse:
+      $ref: './components/schemas/UserResponse.yaml'
+    ErrorResponse:
+      $ref: './components/schemas/ErrorResponse.yaml'
