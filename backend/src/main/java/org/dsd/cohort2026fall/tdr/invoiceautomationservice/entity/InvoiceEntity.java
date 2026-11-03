@@ -46,7 +46,7 @@ public class InvoiceEntity {
     @Column(name = "invoice_status", nullable = false)
     private String invoiceStatus;
 
-    @Column(name = "failure_reason", nullable = false)
+    @Column(name = "failure_reason")
     private String failureReason;
 
     @Column(name = "blob_file_url", nullable = false)
