@@ -1,0 +1,48 @@
+post:
+  summary: Upload an invoice file (PDF, PNG or JPEG)
+  operationId: uploadInvoice
+  tags:
+    - Invoice Uploads
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          required:
+            - file
+          properties:
+            file:
+              type: string
+              format: binary
+  responses:
+    '201':
+      description: File stored and invoice created in INGESTED status
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/InvoiceUploadResponse.yaml'
+    '400':
+      description: Empty file or unsupported file type
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '409':
+      description: This exact file has already been uploaded
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '413':
+      description: File exceeds the 10MB limit
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '503':
+      description: File storage unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'

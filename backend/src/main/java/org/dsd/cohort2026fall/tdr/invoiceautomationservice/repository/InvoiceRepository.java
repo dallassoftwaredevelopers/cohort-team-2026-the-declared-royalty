@@ -15,8 +15,10 @@ import java.util.UUID;
 public interface InvoiceRepository extends JpaRepository<InvoiceEntity, UUID>, JpaSpecificationExecutor<InvoiceEntity> {
     Page<InvoiceEntity> findByMapping_Property_PropertyId(UUID propertyId, Pageable pageable);
 
+    Optional<InvoiceEntity> findByBlobFileSha256(String blobFileSha256);
     Page<InvoiceEntity> findByInvoiceStatus(String status, Pageable pageable);
 
+    boolean existsByBlobFileSha256(String blobFileSha256);
     Optional<InvoiceEntity> findByMapping_Vendor_VendorIdAndVendorSuppliedInvoiceIdAndBillingPeriodEnd(
             UUID vendorId, String vendorSuppliedInvoiceId, LocalDate billingPeriodEnd);
 }

@@ -1,0 +1,20 @@
+type: object
+required:
+  - invoiceId
+  - status
+  - originalFilename
+  - createdAt
+properties:
+  invoiceId:
+    type: string
+    format: uuid
+    example: "7b8a9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
+  status:
+    type: string
+    example: "INGESTED"
+  originalFilename:
+    type: string
+    example: "brightwater-october.pdf"
+  createdAt:
+    type: string
+    format: date-time
