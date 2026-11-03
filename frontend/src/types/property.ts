@@ -4,7 +4,7 @@ export type Property = {
     streetAddress: string,
     city: string,
     state: string,
-    zip: string,
+    zipCode: string,
     status: string,
     createdAt: string,
     updatedAt: string,
@@ -16,6 +16,6 @@ export type PropertyResponse = {
     streetAddress: string,
     city: string,
     state: string,
-    zip: string,
+    zipCode: string,
     status: string,
 }
