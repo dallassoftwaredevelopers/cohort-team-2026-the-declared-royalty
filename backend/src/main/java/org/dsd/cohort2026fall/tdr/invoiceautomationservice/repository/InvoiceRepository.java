@@ -24,4 +24,8 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, UUID>, J
 }
 
     Optional<InvoiceEntity> findByVendorIdAndInvoiceNumberAndBillingPeriodEnd(UUID propertyId);
+
+    Optional<InvoiceEntity> findByBlobFileSha256(String blobFileSha256);
+    
+    boolean existsByBlobFileSha256(String blobFileSha256);
 }
