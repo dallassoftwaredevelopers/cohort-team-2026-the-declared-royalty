@@ -1,0 +1,55 @@
+type: object
+required:
+  - invoice
+  - user
+  - actionType
+  - actionTaken
+  - fromState
+  - toState
+properties:
+  invoice:
+    type: string
+    format: uuid
+  user:
+    type: string
+    format: uuid
+    description: "The UUID of the authorizing user whose credentials and permissions were used."
+    example: "7b8a9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
+  actionType:
+    type: string
+    description: "Indicates the operation category, explicitly prefixing automated actions executed on behalf of a user"
+    enum:
+      # 1. INGESTED
+      - SYSTEM_INGESTED
+      - USER_INGESTED
+      # 2. IDENTIFIED
+      - SYSTEM_IDENTIFIED
+      - USER_IDENTIFIED
+      # 3. MATCHED
+      - SYSTEM_MATCHED
+      - USER_MATCHED
+      # 4. VALIDATED
+      - SYSTEM_VALIDATED
+      - USER_VALIDATED
+      # 5. APPROVED
+      - SYSTEM_APPROVED
+      - USER_APPROVED
+      # 6. PAID
+      - SYSTEM_PAID
+      - USER_PAID
+    example: "SYSTEM_MATCHED"
+  actionTaken:
+    type: string
+    example: "AI parsed invoice layout under user 7453 permissions."
+  fromState:
+    type: string
+    description: "The monetary value or prior transaction status before this operation."
+    example: "UNASSIGNED"
+  toState:
+    type: string
+    description: "The monetary value or prior transaction status after this operation."
+    example: "PROPERTY_ID_8820"
+  notes:
+    type: string
+    description: "Optional details about verification metrics, system flags, or user reasoning."
+    example: "User corrected the invoice total from original extraction of $4,000.00."

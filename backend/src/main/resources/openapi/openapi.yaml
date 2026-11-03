@@ -20,6 +20,10 @@ paths:
     $ref: './paths/vendors.yaml'
   /api/v1/vendors/{vendorUuid}:
     $ref: './paths/vendors_by_uuid.yaml'
+  /api/v1/audit-logs:
+    $ref: './paths/audit_logs.yaml'
+  /api/v1/audit-logs/{auditUuid}:
+    $ref: './paths/audit_logs_by_id.yaml'
 
 components:
   parameters:
@@ -49,3 +53,7 @@ components:
       $ref: './components/schemas/UserResponse.yaml'
     ErrorResponse:
       $ref: './components/schemas/ErrorResponse.yaml'
+    AuditLogCreateRequest:
+      $ref: './components/schemas/AuditLogCreateRequest.yaml'
+    AuditLogResponse:
+      $ref: './components/schemas/AuditLogResponse.yaml'

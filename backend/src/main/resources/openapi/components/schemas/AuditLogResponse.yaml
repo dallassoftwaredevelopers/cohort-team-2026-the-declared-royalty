@@ -1,0 +1,44 @@
+type: object
+required:
+  - auditLogId
+  - invoice
+  - user
+  - actionType
+  - actionTaken
+  - fromState
+  - toState
+  - notes
+  - createdAt
+  - updatedAt
+properties:
+  auditLogId:
+    type: string
+    format: uuid
+  invoice:
+    type: string
+    format: uuid
+  user:
+    type: string
+    format: uuid
+  actionType:
+    type: string
+    example: "SYSTEM_APPROVED"
+  actionTaken:
+    type: string
+    example: "System approved payment of bill"
+  fromState:
+    type: string
+    example: "DRAFT_AMOUNT: $4500.00"
+  toState:
+    type: string
+    example: "APPROVED_AMOUNT: $4500.00"
+  notes:
+    type: string
+    example: "Confidence score: 93%. System approved $4500.00 on 10/31/27."
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+
