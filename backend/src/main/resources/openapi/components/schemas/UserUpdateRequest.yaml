@@ -7,5 +7,5 @@ properties:
     format: email
   role:
     type: string
-  isActive:
+  status:
     type: string

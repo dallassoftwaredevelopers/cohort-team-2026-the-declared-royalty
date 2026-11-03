@@ -12,6 +12,6 @@ properties:
   role:
     type: string
     default: "ADMIN"
-  isActive:
+  status:
     type: string
     default: "ACTIVE"
