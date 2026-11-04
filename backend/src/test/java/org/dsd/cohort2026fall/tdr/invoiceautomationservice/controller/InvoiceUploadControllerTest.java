@@ -10,18 +10,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -32,6 +36,8 @@ class InvoiceUploadControllerTest {
 
     private static final String UPLOAD_URL = "/api/v1/invoices/upload";
     private static final OffsetDateTime CREATED_AT = OffsetDateTime.parse("2026-01-01T00:00:00Z");
+    private static final String HASH_A = "a".repeat(64);
+    private static final String HASH_B = "b".repeat(64);
 
     @Autowired
     private MockMvc mockMvc;
@@ -104,12 +110,12 @@ class InvoiceUploadControllerTest {
         // In production the multipart resolver throws this before the controller runs;
         // here it's thrown from the service just to prove the handler maps it to 413
         when(invoiceUploadService.upload(any()))
-                .thenThrow(new MaxUploadSizeExceededException(10L * 1024 * 1024));
+                .thenThrow(new MaxUploadSizeExceededException(5L * 1024 * 1024));
 
         mockMvc.perform(multipart(UPLOAD_URL).file(pdf()))
                 .andExpect(status().isPayloadTooLarge())
                 .andExpect(jsonPath("$.status").value(413))
-                .andExpect(jsonPath("$.message").value("File too large: maximum size is 10MB"));
+                .andExpect(jsonPath("$.message").value("File too large: maximum size is 5MB"));
     }
 
     @Test
@@ -122,5 +128,27 @@ class InvoiceUploadControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(invoiceUploadService, never()).upload(any());
+    }
+
+    @Test
+    void checkDuplicates_returnsMatchingHashes() throws Exception {
+        when(invoiceUploadService.findExistingHashes(any())).thenReturn(List.of(HASH_A));
+
+        mockMvc.perform(post(UPLOAD_URL + "/check-duplicates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hashes\":[\"" + HASH_A + "\",\"" + HASH_B + "\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duplicates", hasSize(1)))
+                .andExpect(jsonPath("$.duplicates[0]").value(HASH_A));
+    }
+
+    @Test
+    void checkDuplicates_malformedHash_returns400() throws Exception {
+        mockMvc.perform(post(UPLOAD_URL + "/check-duplicates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"hashes\":[\"not-a-hash\"]}"))
+                .andExpect(status().isBadRequest());
+
+        verify(invoiceUploadService, never()).findExistingHashes(any());
     }
 }

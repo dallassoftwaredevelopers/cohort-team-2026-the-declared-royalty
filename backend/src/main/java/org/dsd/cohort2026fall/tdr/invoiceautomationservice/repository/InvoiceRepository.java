@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,4 +30,7 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, UUID>, J
     Optional<InvoiceEntity> findByBlobFileSha256(String blobFileSha256);
     
     boolean existsByBlobFileSha256(String blobFileSha256);
+
+    @Query("select i.blobFileSha256 from InvoiceEntity i where i.blobFileSha256 in :hashes")
+    List<String> findExistingHashes(@Param("hashes") Collection<String> hashes);
 }

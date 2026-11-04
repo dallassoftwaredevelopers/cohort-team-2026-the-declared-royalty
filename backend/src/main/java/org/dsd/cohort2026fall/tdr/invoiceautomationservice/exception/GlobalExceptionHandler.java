@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleTooLarge(MaxUploadSizeExceededException ex, HttpServletRequest request) {
-        return build(HttpStatus.valueOf(413), "File too large: maximum size is 10MB", request);
+        return build(HttpStatus.valueOf(413), "File too large: maximum size is 5MB", request);
     }
 
     @ExceptionHandler(StorageException.class)

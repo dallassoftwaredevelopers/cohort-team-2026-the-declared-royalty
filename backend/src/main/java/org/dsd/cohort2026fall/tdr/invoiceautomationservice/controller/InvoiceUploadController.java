@@ -3,6 +3,8 @@ package org.dsd.cohort2026fall.tdr.invoiceautomationservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.api.InvoiceUploadsApi;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.DuplicateCheckRequest;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.DuplicateCheckResponse;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceUploadResponse;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.service.InvoiceUploadService;
 import org.springframework.http.HttpStatus;
@@ -27,5 +29,12 @@ public class InvoiceUploadController implements InvoiceUploadsApi {
         body.setCreatedAt(saved.getCreatedAt());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    }
+
+    @Override
+    public ResponseEntity<DuplicateCheckResponse> checkDuplicateUploads(DuplicateCheckRequest request) {
+        DuplicateCheckResponse body = new DuplicateCheckResponse();
+        body.setDuplicates(invoiceUploadService.findExistingHashes(request.getHashes()));
+        return ResponseEntity.ok(body);
     }
 }

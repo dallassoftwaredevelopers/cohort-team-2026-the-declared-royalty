@@ -21,10 +21,7 @@ import org.apache.tika.Tika;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -164,5 +161,11 @@ public class InvoiceUploadService {
         } catch (StorageException e) {
             log.warn("Could not clean up orphaned file {}", key, e);
         }
+    }
+
+    /** Returns which of the given hashes already belong to an uploaded invoice. */
+    public List<String> findExistingHashes(List<String> hashes) {
+        if (hashes == null || hashes.isEmpty()) return List.of();
+        return invoiceRepository.findExistingHashes(new HashSet<>(hashes));
     }
 }

@@ -21,6 +21,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -159,6 +160,21 @@ class InvoiceUploadServiceTest {
                 .isInstanceOf(DuplicateFileException.class);
 
         verify(storageService).delete(STORAGE_KEY);
+    }
+
+    @Test
+    void findExistingHashes_returnsOnlyKnownHashes() {
+        String known = "a".repeat(64);
+        when(invoiceRepository.findExistingHashes(any())).thenReturn(List.of(known));
+
+        assertThat(service.findExistingHashes(List.of(known, "b".repeat(64))))
+                .containsExactly(known);
+    }
+
+    @Test
+    void findExistingHashes_emptyInput_skipsDatabase() {
+        assertThat(service.findExistingHashes(List.of())).isEmpty();
+        verifyNoInteractions(invoiceRepository);
     }
 
     // ---------- failure cleanup ----------
