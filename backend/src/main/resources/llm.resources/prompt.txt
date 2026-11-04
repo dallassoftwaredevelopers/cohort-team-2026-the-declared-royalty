@@ -11,16 +11,10 @@ following information:
 
 Instructions:
 
-- Only extract information explicitly present
-in the document.
+- Only extract information explicitly present in the document.
 - Do not infer missing values.
 - Include a confidence score for each extracted value, ranging from 0 to 1, indicating the confidence in the accuracy of the extraction.
-- If a value cannot be found, return null.
-- Distinguish the billing address from the
-service/property address.
-- Return the total amount due, not the
-minimum payment or previous balance.
+- If a value cannot be found, assign the value to null and the confidence to 0.0
+- Distinguish the billing address from the service/property address.
+- Return the total amount due, not the minimum payment or previous balance.
 - Do not include explanations or commentary.
-- Each value should be returned as a string, except for the total amount due, which should be returned as a number.
-
-Return the extracted information as JSON.

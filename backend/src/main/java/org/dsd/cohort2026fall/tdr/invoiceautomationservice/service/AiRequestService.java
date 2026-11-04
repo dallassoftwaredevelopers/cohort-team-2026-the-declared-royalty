@@ -20,7 +20,7 @@ public class AiRequestService {
 
 //    https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses&lang=java
 //    generates request parameters for the AI model based on the provided prompt and schema file paths
-    public ResponseCreateParams getRequestParams(String promptFilePath, String invoiceName, String schemaFilePath) {
+    public ResponseCreateParams getRequestParams(String promptFilePath, String invoiceName, String schemaFilePath, JSONObject extractedValuesStructure) {
         return ResponseCreateParams.builder()
                 .model("gpt-6-astra")
                     .inputOfResponse(
@@ -45,7 +45,7 @@ public class AiRequestService {
                                                     .name("invoiceValues")
                                                     .strict(true)
                                                     .schema(
-                                                            JsonValue.from(getSchema(schemaFilePath))
+                                                            JsonValue.from(getSchema(schemaFilePath, extractedValuesStructure))
                                                                     .convert(ResponseFormatTextJsonSchemaConfig.Schema.class))
                                                     .build())
                                     .build())
@@ -53,8 +53,9 @@ public class AiRequestService {
     }
 
 //    generates a JSON schema for the LLM response based on the sample JSON provided at the file path
-    private Map<String, Object> getSchema(String filePath) {
-        Map<String, Object> properties = getSchemaFromJsonObject(getJsonFromFile(filePath));
+    private Map<String, Object> getSchema(String jsonStructureFilePath, JSONObject extractedValuesJson) {
+        Map<String, Object> properties = getSchemaFromJsonObject(getJsonFromFile(jsonStructureFilePath), extractedValuesJson);
+
         return Map.of(
                 "type", "object",
                 "properties", properties,
@@ -64,19 +65,37 @@ public class AiRequestService {
     }
 
 //    recursively generates a JSON schema for the LLM response based on the sample JSON Object provided
-    private Map<String, Object> getSchemaFromJsonObject(JSONObject jsonObject){
+    private Map<String, Object> getSchemaFromJsonObject(JSONObject structureJsonObject, JSONObject extractedValuesJson) {
         Map<String, Object> properties = new HashMap<>();
-        for (String field : jsonObject.keySet()) {
-            Object value = jsonObject.get(field);
+        for (String field : structureJsonObject.keySet()) {
+            Object value = structureJsonObject.get(field);
             String type = determineJsonType(value);
-            if(type.equals("object") && value instanceof JSONObject nestedObject) {
+            if(type.equals("object") && field.equals("extracted_values")) {
                 properties.put(field, Map.of(
                         "type", "object",
-                        "properties", getSchemaFromJsonObject(nestedObject)
+                        "properties", populateExtractedValues(extractedValuesJson)
+                ));
+            } else if(type.equals("object") && value instanceof JSONObject nestedObject) {
+                properties.put(field, Map.of(
+                        "type", "object",
+                        "properties", getSchemaFromJsonObject(nestedObject, new JSONObject())
                 ));
             } else {
                 properties.put(field, Map.of("type", type));
             }
+        }
+        return properties;
+    }
+
+    private Map<String, Object> populateExtractedValues(JSONObject extractedValuesJson) {
+        Map<String, Object> properties = new HashMap<>();
+        for (String field : extractedValuesJson.keySet()) {
+            Object value = extractedValuesJson.get(field);
+            String type = determineJsonType(value);
+            properties.put(field, Map.of(
+                        "value", Map.of("type", type),
+                        "confidence", Map.of("type", "number")
+            ));
         }
         return properties;
     }

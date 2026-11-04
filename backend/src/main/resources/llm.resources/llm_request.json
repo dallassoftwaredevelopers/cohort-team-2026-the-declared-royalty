@@ -1,20 +1,4 @@
 {
-  "model": "YOUR_MODEL",
-  "input": [
-    {
-      "role": "user",
-      "content": [
-        {
-          "type": "input_file",
-          "filename": null,
-          "file_data": "data:application/pdf;base64,"
-        },
-        {
-          "type": "input_text",
-          "prompt": null,
-          "sample_response": null
-        }
-      ]
-    }
-  ]
+  "extracted_values": {},
+  "error": "error message"
 }
