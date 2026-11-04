@@ -27,3 +27,6 @@ management:
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
+
+openai:
+  api-key: ${OPENAI_API_KEY:""}
