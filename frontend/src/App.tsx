@@ -70,7 +70,6 @@ export default function App() {
 
   return (
     <AppShell currentRoute={currentRoute} onNavigate={navigate} routes={routes}>
-      <WorkspacePage title={currentRoute.label} />
       {currentRoute.path === "/bills" ? (
         <BillsPage />
       ) : (
