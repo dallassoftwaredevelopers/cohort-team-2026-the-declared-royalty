@@ -7,14 +7,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface InvoiceRepository extends JpaRepository<InvoiceEntity, UUID>, JpaSpecificationExecutor<InvoiceEntity> {
-    Page<InvoiceEntity> findByPropertyId(UUID propertyId, Pageable pageable);
+    Page<InvoiceEntity> findByMapping_Property_PropertyId(UUID propertyId, Pageable pageable);
 
-    Page<InvoiceEntity> findByStatus(String status, Pageable pageable);
+    Page<InvoiceEntity> findByInvoiceStatus(String status, Pageable pageable);
 
-    Optional<InvoiceEntity> findByVendorIdAndInvoiceNumberAndBillingPeriodEnd(UUID propertyId);
+    Optional<InvoiceEntity> findByMapping_Vendor_VendorIdAndVendorSuppliedInvoiceIdAndBillingPeriodEnd(
+            UUID vendorId, String vendorSuppliedInvoiceId, LocalDate billingPeriodEnd);
 }
