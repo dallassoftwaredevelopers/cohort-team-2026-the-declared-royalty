@@ -1,0 +1,9 @@
+type: object
+required:
+  - duplicates
+properties:
+  duplicates:
+    type: array
+    description: "The subset of submitted hashes that already belong to an uploaded invoice."
+    items:
+      type: string
