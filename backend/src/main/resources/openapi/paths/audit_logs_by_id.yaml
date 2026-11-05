@@ -1,0 +1,21 @@
+get:
+  summary: Get audit log by ID
+  operationId: getAuditLogById
+  tags:
+    - Audit Logs
+  parameters:
+    - name: auditUuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Audit Log found
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/AuditLogResponse.yaml'
+    '404':
+      description: Audit Log not found

@@ -2,18 +2,22 @@ package org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest;
+import org.hibernate.annotations.Immutable;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "audit_logs")
+@Immutable
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuditLogsEntity {
+@Table(name = "audit_logs")
+public class AuditLogEntity {
 
     @Id
     @Column(name = "audit_uuid", updatable = false, nullable = false)
@@ -27,26 +31,32 @@ public class AuditLogsEntity {
     @JoinColumn(name = "user_uuid", nullable = false)
     private UserEntity user;
 
-    @Column(name = "action_type", length = 255)
-    private String actionType;
+    @Column(name = "action_type")
+    @Enumerated(EnumType.STRING)
+    private AuditLogCreateRequest.ActionTypeEnum actionType;
 
     @Column(name = "action_taken", length = 225)
     private String actionTaken;
 
-    @Column(name = "from_state", length = 255)
+    @Column(name = "from_state")
     private String fromState;
 
-    @Column(name = "to_state", length = 255)
+    @Column(name = "to_state")
     private String toState;
 
     @Column(name = "notes", length = 3000)
     private String notes;
 
-    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();;
+    private OffsetDateTime createdAt;
 
-    @Builder.Default
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt = OffsetDateTime.now();;
+    @Column(name = "updated_at", nullable = false, updatable = false)
+    private OffsetDateTime updatedAt;
+
+    @PrePersist
+    void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
 }
