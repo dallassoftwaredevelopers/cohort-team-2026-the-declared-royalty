@@ -10,13 +10,15 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.UUID;
 
+// Audit logs are append-only: write only through AuditLogService; never update or delete.
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> {
     @Query("SELECT a FROM AuditLogEntity a WHERE " +
     "(:invoice IS NULL OR a.invoice.invoiceId = :invoice) AND " +
     "(:actionType IS NULL OR a.actionType = :actionType) AND " +
     "(:fromState IS NULL OR a.fromState = :fromState) AND " +
-    "(:toState IS NULL OR a.toState = :toState)")
+    "(:toState IS NULL OR a.toState = :toState) " +
+    "ORDER BY a.createdAt ASC")
     List<AuditLogEntity> findAuditLogsByFilters(
             @Param("invoice") UUID invoice,
             @Param("actionType") AuditLogCreateRequest.ActionTypeEnum actionType,
