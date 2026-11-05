@@ -3,11 +3,13 @@ package org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest;
+import org.hibernate.annotations.Immutable;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
+@Immutable
 
 @Getter
 @Setter
@@ -45,9 +47,16 @@ public class AuditLogEntity {
     @Column(name = "notes", length = 3000)
     private String notes;
 
-    @Column(name = "created_at", insertable = false, nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false, nullable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false, updatable = false)
     private OffsetDateTime updatedAt;
+
+    @PrePersist
+    void onCreate() {
+        OffsetDateTime now = OffsetDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
+    }
 }
