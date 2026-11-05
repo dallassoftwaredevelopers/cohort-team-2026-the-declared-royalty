@@ -8,6 +8,6 @@ export type PropertyVendorMapping = {
     vendorAccountNumber: string,
     status: string,
     autoApprovalEnabled: boolean,
-    createAt: string,
-    updateAt: string,
+    createdAt: string,
+    updatedAt: string,
 }
