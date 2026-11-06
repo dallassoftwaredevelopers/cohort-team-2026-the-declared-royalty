@@ -25,6 +25,12 @@ public class TempController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/analyze")
+    public ResponseEntity<String> analyzeInvoice() {
+     return ResponseEntity.ok(aiRequestService.analyzeInvoice());
+//     0ef8a787-8931-4b88-8330-1c0908765da1.pdf
+    }
+
 
     @GetMapping("/file")
     public ResponseEntity<byte[]> getFile(){

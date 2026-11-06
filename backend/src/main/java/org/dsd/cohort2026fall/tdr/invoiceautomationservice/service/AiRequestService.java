@@ -29,17 +29,14 @@ public class AiRequestService {
     public String testConnection() {
         Map<String, Object> schema =
                 Map.of(
-                        "type",
-                        "object",
-                        "properties",
-                        Map.of(
+                        "type", "object",
+                        "properties", Map.of(
                                 "name", Map.of("type", "string"),
                                 "date", Map.of("type", "string"),
                                 "participants", Map.of("type", "array", "items", Map.of("type", "string"))),
-                        "required",
-                        List.of("name", "date", "participants"),
-                        "additionalProperties",
-                        false);
+                        "required", List.of("name", "date", "participants"),
+                        "additionalProperties", false
+                );
 
         ResponseCreateParams params =
                 ResponseCreateParams.builder()
@@ -68,7 +65,6 @@ public class AiRequestService {
                                                         .build())
                                         .build())
                         .build();
-
         return client.responses().create(params).output().stream()
                 .flatMap(item -> item.message().stream())
                 .flatMap(message -> message.content().stream())
@@ -77,9 +73,27 @@ public class AiRequestService {
                 .collect(Collectors.joining("\n"));
     }
 
+    public String analyzeInvoice() {
+        String promptFilePath = "/llm.resources/llm_prompt.txt";
+        String schemaFilePath = "/llm.resources/llm_request.json";
+        String invoiceName = "invoices/alder-creek-bill.pdf";
+
+        JSONObject extractedValuesStructure = getJsonFromFile("/llm.resources/extracted_values_list.json");
+
+        ResponseCreateParams requestParams = getRequestParams(promptFilePath, invoiceName, schemaFilePath, extractedValuesStructure);
+        return client.responses().create(requestParams).output().stream()
+                .flatMap(item -> item.message().stream())
+                .flatMap(message -> message.content().stream())
+                .flatMap(content -> content.outputText().stream())
+                .map(text -> text.text())
+                .collect(Collectors.joining("\n"));
+    }
+
+
+
 //    https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses&lang=java
 //    generates request parameters for the AI model based on the provided prompt and schema file paths
-    public ResponseCreateParams getRequestParams(String promptFilePath, String invoiceName, String schemaFilePath, JSONObject extractedValuesStructure) {
+    private ResponseCreateParams getRequestParams(String promptFilePath, String invoiceName, String schemaFilePath, JSONObject extractedValuesStructure) {
         return ResponseCreateParams.builder()
                 .model("gpt-6-astra")
                     .inputOfResponse(
@@ -94,7 +108,16 @@ public class AiRequestService {
                                     ResponseInputItem.ofEasyInputMessage(
                                             EasyInputMessage.builder()
                                                     .role(EasyInputMessage.Role.USER)
-                                                    .content(getInvoiceBase64DataUrl(invoiceName))
+                                                    // Pass structured blocks instead of a single text string
+                                                    .content(EasyInputMessage.Content.ofResponseInputMessageContentList(List.of(
+                                                                    // Define the file block with filename and data URI
+                                                                    ResponseInputContent.ofInputFile(
+                                                                            ResponseInputFile.builder()
+                                                                                    .filename(invoiceName + ".pdf")
+                                                                                    .fileData(getInvoiceBase64DataUrl(invoiceName)) // Ensure this starts with "data:application/pdf;base64,"
+//                                                                                    .detail(ResponseInputFile.Detail.HIGH) // Optional: HIGH details for text-heavy invoices
+                                                                                    .build()
+                                                                    ))))
                                                     .build())))
 //                provides the expected response format to the AI model, including the JSON schema for validation
                     .text(
@@ -123,21 +146,29 @@ public class AiRequestService {
         );
     }
 
-//    recursively generates a JSON schema for the LLM response based on the sample JSON Object provided
+//    recursively generates a JSON schema for the LLM response based on the sample JSON Objects provided
+//    structureJsonObject: the sample JSON structure that defines the overall structure for the returned JSON. Defined in "src/main/resources/llm.resources/llm_request.json"
+//    extractedValuesJson: the sample JSON structure that defines the desired values to be extracted and their types. Defined in "src/main/resources/llm.resources/extracted_values.json" but can also be received from the frontend
     private Map<String, Object> getSchemaFromJsonObject(JSONObject structureJsonObject, JSONObject extractedValuesJson) {
         Map<String, Object> properties = new HashMap<>();
         for (String field : structureJsonObject.keySet()) {
             Object value = structureJsonObject.get(field);
             String type = determineJsonType(value);
             if(type.equals("object") && field.equals("extracted_values")) {
+                Map<String, Object> nestedProperties = populateExtractedValues(extractedValuesJson);
                 properties.put(field, Map.of(
                         "type", "object",
-                        "properties", populateExtractedValues(extractedValuesJson)
+                        "properties", nestedProperties,
+                        "additionalProperties", false,
+                        "required", nestedProperties.keySet()
                 ));
             } else if(type.equals("object") && value instanceof JSONObject nestedObject) {
+                Map<String, Object> nestedProperties = getSchemaFromJsonObject(nestedObject, new JSONObject());
                 properties.put(field, Map.of(
                         "type", "object",
-                        "properties", getSchemaFromJsonObject(nestedObject, new JSONObject())
+                        "properties", nestedProperties,
+                        "additionalProperties", false,
+                        "required", nestedProperties.keySet()
                 ));
             } else {
                 properties.put(field, Map.of("type", type));
@@ -152,8 +183,13 @@ public class AiRequestService {
             Object value = extractedValuesJson.get(field);
             String type = determineJsonType(value);
             properties.put(field, Map.of(
-                        "value", Map.of("type", type),
-                        "confidence", Map.of("type", "number")
+                    "type", "object",
+                    "properties", Map.of(
+                            "value", Map.of("type", type),
+                            "confidence", Map.of("type", "number")
+                    ),
+                    "additionalProperties", false,
+                    "required", List.of("value", "confidence")
             ));
         }
         return properties;
@@ -195,6 +231,7 @@ public class AiRequestService {
     }
 
 //    reads a prompt from the specified file path and returns it as a string
+//    expected prompt filepath: "src/main/resources/llm.resources/llm_prompt.txt"
     private String getPrompt(String filePath){
         try (var reader = new InputStreamReader(
                 getClass().getResourceAsStream(filePath),
