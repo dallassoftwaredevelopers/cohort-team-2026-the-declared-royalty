@@ -1,5 +1,6 @@
 package org.dsd.cohort2026fall.tdr.invoiceautomationservice.service;
 
+import com.openai.client.OpenAIClient;
 import com.openai.core.JsonValue;
 import com.openai.models.responses.*;
 import io.minio.GetObjectArgs;
@@ -14,9 +15,67 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class AiRequestService {
+
+    private final OpenAIClient client;
+
+    public AiRequestService(OpenAIClient client) {
+        this.client = client;
+    }
+
+    public String testConnection() {
+        Map<String, Object> schema =
+                Map.of(
+                        "type",
+                        "object",
+                        "properties",
+                        Map.of(
+                                "name", Map.of("type", "string"),
+                                "date", Map.of("type", "string"),
+                                "participants", Map.of("type", "array", "items", Map.of("type", "string"))),
+                        "required",
+                        List.of("name", "date", "participants"),
+                        "additionalProperties",
+                        false);
+
+        ResponseCreateParams params =
+                ResponseCreateParams.builder()
+                        .model("gpt-6-astra")
+                        .inputOfResponse(
+                                List.of(
+                                        ResponseInputItem.ofEasyInputMessage(
+                                                EasyInputMessage.builder()
+                                                        .role(EasyInputMessage.Role.SYSTEM)
+                                                        .content("Extract the event information.")
+                                                        .build()),
+                                        ResponseInputItem.ofEasyInputMessage(
+                                                EasyInputMessage.builder()
+                                                        .role(EasyInputMessage.Role.USER)
+                                                        .content("Alice and Bob are going to a science fair on Friday.")
+                                                        .build())))
+                        .text(
+                                ResponseTextConfig.builder()
+                                        .format(
+                                                ResponseFormatTextJsonSchemaConfig.builder()
+                                                        .name("event")
+                                                        .strict(true)
+                                                        .schema(
+                                                                JsonValue.from(schema)
+                                                                        .convert(ResponseFormatTextJsonSchemaConfig.Schema.class))
+                                                        .build())
+                                        .build())
+                        .build();
+
+        return client.responses().create(params).output().stream()
+                .flatMap(item -> item.message().stream())
+                .flatMap(message -> message.content().stream())
+                .flatMap(content -> content.outputText().stream())
+                .map(text -> text.text())
+                .collect(Collectors.joining("\n"));
+    }
 
 //    https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses&lang=java
 //    generates request parameters for the AI model based on the provided prompt and schema file paths

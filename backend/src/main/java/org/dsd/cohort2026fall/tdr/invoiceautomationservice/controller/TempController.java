@@ -1,6 +1,8 @@
 package org.dsd.cohort2026fall.tdr.invoiceautomationservice.controller;
 
 import io.minio.GetObjectArgs;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.service.AiRequestService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,16 @@ import java.io.InputStream;
 // This controller is just for testing, I'll delete it later
 @RestController("/temp")
 public class TempController {
+
+    @Autowired
+    private AiRequestService aiRequestService;
+
+    @GetMapping("/ai")
+    public ResponseEntity<String> testAiConnection() {
+        String response = aiRequestService.testConnection();
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/file")
     public ResponseEntity<byte[]> getFile(){
