@@ -8,6 +8,7 @@ import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateR
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogResponse;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.AuditLogRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.AuditLogEntity;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.service.AuditLogService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,82 +22,29 @@ import java.util.UUID;
 @RestController
 public class AuditLogController implements AuditLogsApi {
 
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogService auditLogService;
 
-    public AuditLogController(AuditLogRepository auditLogRepository) {
-        this.auditLogRepository = auditLogRepository;
+    public AuditLogController(AuditLogService auditLogService) {
+        this.auditLogService = auditLogService;
     }
 
     @Override
     public ResponseEntity<List<AuditLogResponse>> getAuditLogs(UUID invoice, String actionType, String fromState, String toState) {
-        log.info("REST Request received to search audit logs. Filters - Invoice: {}, Action: {}, ToState: {}",
-                invoice, actionType, toState);
+        log.info("Searching audit logs. invoice={}, actionType={}, fromState={}, toState={}",
+                invoice, actionType, fromState, toState);
 
-        AuditLogCreateRequest.ActionTypeEnum actionTypeEnum = null;
-        if (actionType != null && !actionType.isBlank()) {
-            actionTypeEnum = AuditLogCreateRequest.ActionTypeEnum.fromValue(actionType);
-        }
-
-        List<AuditLogResponse> logs = auditLogRepository.findAuditLogsByFilters(invoice, actionTypeEnum, fromState, toState).stream()
-                .map(this::toResponse)
-                .toList();
-
-        log.info("Successfully returned {} audit log records.", logs.size());
+        List<AuditLogResponse> logs = auditLogService.getAuditLogs(invoice, actionType, fromState, toState);
+        log.info("Returning {} audit log records.", logs.size());
         return ResponseEntity.ok(logs);
     }
 
     @Override
     public ResponseEntity<AuditLogResponse> createAuditLog(AuditLogCreateRequest request) {
-        AuditLogEntity entity = new AuditLogEntity();
-
-        entity.setAuditUuid(UUID.randomUUID());
-        InvoiceEntity invoiceProxy = new InvoiceEntity();
-        invoiceProxy.setInvoiceId(request.getInvoice());
-        entity.setInvoice(invoiceProxy);
-
-        UserEntity userProxy = UserEntity.builder()
-                .userId(request.getUser())
-                .build();
-        entity.setUser(userProxy);
-
-        entity.setActionType(request.getActionType());
-        entity.setActionTaken(request.getActionTaken());
-        entity.setFromState(request.getFromState());
-        entity.setToState(request.getToState());
-        entity.setNotes(request.getNotes());
-
-        AuditLogEntity saved = auditLogRepository.save(entity);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+        return ResponseEntity.status(HttpStatus.CREATED).body(auditLogService.createAuditLog(request));
     }
 
     @Override
     public ResponseEntity<AuditLogResponse> getAuditLogById(UUID auditUuid) {
-        AuditLogEntity entity = auditLogRepository.findById(auditUuid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Audit log entry not found"));
-        return ResponseEntity.ok(toResponse(entity));
-    }
-
-    private AuditLogResponse toResponse(AuditLogEntity entity) {
-        AuditLogResponse response = new AuditLogResponse();
-        response.setAuditLogId(entity.getAuditUuid());
-
-        if (entity.getInvoice() != null) {
-            response.setInvoice(entity.getInvoice().getInvoiceId());
-        }
-        if (entity.getUser() != null) {
-            response.setUser(entity.getUser().getUserId());
-        }
-
-        if (entity.getActionType() != null) {
-            response.setActionType(entity.getActionType().getValue());
-        }
-
-        response.setActionTaken(entity.getActionTaken());
-        response.setFromState(entity.getFromState());
-        response.setToState(entity.getToState());
-        response.setNotes(entity.getNotes());
-        response.setCreatedAt(entity.getCreatedAt());
-        response.setUpdatedAt(entity.getUpdatedAt());
-        return response;
+        return ResponseEntity.ok(auditLogService.getAuditLogById(auditUuid));
     }
 }
