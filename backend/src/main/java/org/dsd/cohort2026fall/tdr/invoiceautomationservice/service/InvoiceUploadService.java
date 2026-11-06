@@ -2,14 +2,12 @@ package org.dsd.cohort2026fall.tdr.invoiceautomationservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.AuditLogEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.UserEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.DuplicateFileException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvalidFileException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.StorageException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.AuditLogRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.InvoiceRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.UserRepository;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,7 +43,7 @@ public class InvoiceUploadService {
 
     private final InvoiceRepository invoiceRepository;
     private final DocumentStorageService storageService;
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogService auditLogService;
     private final UserRepository userRepository;
     private final TransactionTemplate transactionTemplate;
 
@@ -89,16 +87,14 @@ public class InvoiceUploadService {
                         .originalFilename(filename)
                         .build());
 
-                auditLogRepository.save(AuditLogEntity.builder()
-                        .auditUuid(UUID.randomUUID())
-                        .invoice(saved)
-                        .user(systemUser())
-                        .actionType(AuditLogCreateRequest.ActionTypeEnum.SYSTEM_INGESTED)
-                        .actionTaken("File uploaded and stored")
-                        .fromState("NONE")
-                        .toState(STATUS_INGESTED)
-                        .notes("File: " + filename + " | storage key: " + key + " | sha256: " + hash)
-                        .build());
+                auditLogService.record(
+                        saved.getInvoiceId(),
+                        systemUser().getUserId(),
+                        AuditLogCreateRequest.ActionTypeEnum.SYSTEM_INGESTED,
+                        "File uploaded and stored",
+                        "NONE",
+                        STATUS_INGESTED,
+                        "File: " + filename + " | storage key: " + key + " | sha256: " + hash);
 
                 return saved;
             });
@@ -118,17 +114,14 @@ public class InvoiceUploadService {
 
     private void recordDuplicateAttempt(InvoiceEntity original, String filename) {
         try {
-            transactionTemplate.executeWithoutResult(status ->
-                    auditLogRepository.save(AuditLogEntity.builder()
-                            .auditUuid(UUID.randomUUID())
-                            .invoice(original)
-                            .user(systemUser())
-                            .actionType(AuditLogCreateRequest.ActionTypeEnum.SYSTEM_INGESTED)
-                            .actionTaken("Duplicate upload rejected")
-                            .fromState(original.getInvoiceStatus())
-                            .toState(original.getInvoiceStatus())
-                            .notes("Rejected upload of '" + filename + "': identical to this invoice's file")
-                            .build()));
+            auditLogService.record(
+                    original.getInvoiceId(),
+                    systemUser().getUserId(),
+                    AuditLogCreateRequest.ActionTypeEnum.SYSTEM_INGESTED,
+                    "Duplicate upload rejected",
+                    original.getInvoiceStatus(),
+                    original.getInvoiceStatus(),
+                    "Rejected upload of '" + filename + "': identical to this invoice's file");
         } catch (RuntimeException e) {
             log.warn("Could not record duplicate upload attempt for invoice {}", original.getInvoiceId(), e);
         }
