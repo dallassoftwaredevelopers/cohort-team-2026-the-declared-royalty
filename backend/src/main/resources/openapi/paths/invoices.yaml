@@ -1,0 +1,71 @@
+get:
+  tags:
+    - Invoices
+  summary: List invoices
+  operationId: getAllInvoices
+  parameters:
+    - name: page
+      in: query
+      description: Zero-based page number
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    - name: size
+      in: query
+      description: Number of invoices per page (maximum 100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    '200':
+      description: Successfully retrieved a page of invoices
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/InvoicePageResponse.yaml'
+    '400':
+      description: Invalid page or size parameter
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+
+post:
+  tags:
+    - Invoices
+  summary: Create a new invoice
+  operationId: createInvoice
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/InvoiceCreateRequest.yaml'
+  responses:
+    '201':
+      description: Invoice successfully created
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/InvoiceResponse.yaml'
+    '400':
+      description: Invalid request payload
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '404':
+      description: Property-vendor mapping not found
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '409':
+      description: An invoice with the same vendor identifier and billing period already exists for this mapping
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
