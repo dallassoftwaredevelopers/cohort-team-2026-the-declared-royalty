@@ -1,34 +1,32 @@
 package org.dsd.cohort2026fall.tdr.invoiceautomationservice.controller;
 
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.DuplicateFileException;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.GlobalExceptionHandler;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvalidFileException;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.StorageException;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.*;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.service.InvoiceUploadService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.io.ByteArrayInputStream;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(InvoiceUploadController.class)
 @Import(GlobalExceptionHandler.class)
@@ -150,5 +148,32 @@ class InvoiceUploadControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(invoiceUploadService, never()).findExistingHashes(any());
+    }
+
+    @Test
+    void getFile_streamsBytesInlineWithContentType() throws Exception {
+        UUID id = UUID.randomUUID();
+        byte[] bytes = "%PDF-1.4 test".getBytes();
+        when(invoiceUploadService.loadFile(id)).thenReturn(new InvoiceUploadService.InvoiceFile(
+                new ByteArrayInputStream(bytes), "application/pdf", "water-oct.pdf"));
+
+        mockMvc.perform(get("/api/v1/invoices/{id}/file", id))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, containsString("inline")))
+                .andExpect(header().string(HttpHeaders.CONTENT_DISPOSITION, containsString("water-oct.pdf")))
+                .andExpect(content().bytes(bytes));
+    }
+
+    @Test
+    void getFile_missingInvoice_returns404ErrorResponse() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(invoiceUploadService.loadFile(id))
+                .thenThrow(new ResourceNotFoundException("Invoice not found: " + id));
+
+        mockMvc.perform(get("/api/v1/invoices/{id}/file", id))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value("Invoice not found: " + id));
     }
 }
