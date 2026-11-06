@@ -1,26 +1,16 @@
 import { useEffect, useState } from "react";
-import { apiClient } from "../app/services/apiClient";
-
-type User = {
-  userId: string;
-  username?: string;
-  email?: string;
-  role?: string;
-  status?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+import { getUsers } from "../app/services/userService";
+import type { UserResponse } from "../types/user";
 
 function UserList() {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    apiClient
-      .get<User[]>("/api/v1/users", undefined, false)
+    getUsers()
       .then((result) => {
         if (active) setUsers(result);
       })
