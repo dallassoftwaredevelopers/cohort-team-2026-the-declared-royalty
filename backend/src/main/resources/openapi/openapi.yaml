@@ -28,6 +28,10 @@ paths:
     $ref: './paths/invoices.yaml'
   /api/v1/invoices/{invoiceUuid}:
     $ref: './paths/invoices_by_id.yaml'
+  /api/v1/invoices/upload:
+    $ref: './paths/invoice_uploads.yaml'
+  /api/v1/invoices/upload/check-duplicates:
+    $ref: './paths/invoice_upload_check_duplicates.yaml'
 
 components:
   parameters:
@@ -71,3 +75,9 @@ components:
       $ref: './components/schemas/InvoicePageResponse.yaml'
     InvoiceStatus:
       $ref: './components/schemas/InvoiceStatus.yaml'
+    InvoiceUploadResponse:
+      $ref: './components/schemas/InvoiceUploadResponse.yaml'
+    DuplicateCheckRequest:
+      $ref: './components/schemas/DuplicateCheckRequest.yaml'
+    DuplicateCheckResponse:
+      $ref: './components/schemas/DuplicateCheckResponse.yaml'

@@ -1,0 +1,12 @@
+type: object
+required:
+  - hashes
+properties:
+  hashes:
+    type: array
+    description: "Lowercase hex SHA-256 hashes of the files the user selected."
+    minItems: 1
+    maxItems: 50
+    items:
+      type: string
+      pattern: '^[a-f0-9]{64}$'

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiClient } from "../app/services/apiClient";
+import { getProperties } from "@/app/services/propertyService.ts";
 import type { PropertyResponse } from "../types/property";
 
 function PropertyList() {
@@ -10,8 +10,7 @@ function PropertyList() {
   useEffect(() => {
     let active = true;
 
-    apiClient
-      .get<PropertyResponse[]>("/api/v1/properties", undefined, false)
+    getProperties()
       .then((result) => {
         if (active) setProperties(result);
       })
