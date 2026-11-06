@@ -1,0 +1,24 @@
+post:
+  summary: Check which file hashes have already been uploaded
+  operationId: checkDuplicateUploads
+  tags:
+    - Invoice Uploads
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/schemas/DuplicateCheckRequest.yaml'
+  responses:
+    '200':
+      description: The submitted hashes that already exist
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/DuplicateCheckResponse.yaml'
+    '400':
+      description: Missing or malformed hashes
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
