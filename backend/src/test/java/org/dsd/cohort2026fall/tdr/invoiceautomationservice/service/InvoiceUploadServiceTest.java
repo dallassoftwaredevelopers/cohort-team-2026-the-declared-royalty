@@ -1,18 +1,16 @@
 package org.dsd.cohort2026fall.tdr.invoiceautomationservice.service;
 
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.AuditLogEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.UserEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.DuplicateFileException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvalidFileException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.AuditLogRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.InvoiceRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.contains;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,6 +32,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest.ActionTypeEnum.SYSTEM_INGESTED;
 
 @ExtendWith(MockitoExtension.class)
 class InvoiceUploadServiceTest {
@@ -50,7 +49,7 @@ class InvoiceUploadServiceTest {
 
     @Mock private InvoiceRepository invoiceRepository;
     @Mock private DocumentStorageService storageService;
-    @Mock private AuditLogRepository auditLogRepository;
+    @Mock private AuditLogService auditLogService;
     @Mock private UserRepository userRepository;
     @Mock private PlatformTransactionManager transactionManager;
 
@@ -60,7 +59,7 @@ class InvoiceUploadServiceTest {
     void setUp() {
         TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
         service = new InvoiceUploadService(
-                invoiceRepository, storageService, auditLogRepository, userRepository, transactionTemplate);
+                invoiceRepository, storageService, auditLogService, userRepository, transactionTemplate);
     }
 
     // ---------- happy paths ----------
@@ -79,11 +78,14 @@ class InvoiceUploadServiceTest {
         assertThat(result.getBlobFileSha256()).matches("[0-9a-f]{64}");
         assertThat(result.getOriginalFilename()).isEqualTo("brightwater.pdf");
 
-        AuditLogEntity audit = captureAudit();
-        assertThat(audit.getInvoice()).isSameAs(result);
-        assertThat(audit.getActionType()).isEqualTo(AuditLogCreateRequest.ActionTypeEnum.SYSTEM_INGESTED);
-        assertThat(audit.getActionTaken()).isEqualTo("File uploaded and stored");
-        assertThat(audit.getToState()).isEqualTo(InvoiceUploadService.STATUS_INGESTED);
+        verify(auditLogService).record(
+                eq(result.getInvoiceId()),
+                eq(InvoiceUploadService.SYSTEM_USER_ID),
+                eq(SYSTEM_INGESTED),
+                eq("File uploaded and stored"),
+                eq("NONE"),
+                eq(InvoiceUploadService.STATUS_INGESTED),
+                contains(result.getBlobFileSha256()));
     }
 
     @Test
@@ -142,11 +144,14 @@ class InvoiceUploadServiceTest {
         verifyNoInteractions(storageService);
         verify(invoiceRepository, never()).saveAndFlush(any());
 
-        AuditLogEntity audit = captureAudit();
-        assertThat(audit.getInvoice()).isSameAs(original);
-        assertThat(audit.getActionTaken()).isEqualTo("Duplicate upload rejected");
-        assertThat(audit.getFromState()).isEqualTo("PENDING_APPROVAL");
-        assertThat(audit.getToState()).isEqualTo("PENDING_APPROVAL");
+        verify(auditLogService).record(
+                eq(original.getInvoiceId()),
+                eq(InvoiceUploadService.SYSTEM_USER_ID),
+                eq(SYSTEM_INGESTED),
+                eq("Duplicate upload rejected"),
+                eq("PENDING_APPROVAL"),
+                eq("PENDING_APPROVAL"),
+                contains("again.pdf"));
     }
 
     @Test
@@ -175,6 +180,23 @@ class InvoiceUploadServiceTest {
     void findExistingHashes_emptyInput_skipsDatabase() {
         assertThat(service.findExistingHashes(List.of())).isEmpty();
         verifyNoInteractions(invoiceRepository);
+    }
+
+    @Test
+    void duplicateFile_auditFailure_stillRejectsAsDuplicate() {
+        stubSystemUser();
+        InvoiceEntity original = InvoiceEntity.builder()
+                .invoiceId(UUID.randomUUID())
+                .invoiceStatus("INGESTED")
+                .build();
+        when(invoiceRepository.findByBlobFileSha256(anyString())).thenReturn(Optional.of(original));
+        when(auditLogService.record(any(), any(), any(), any(), any(), any(), any()))
+                .thenThrow(new RuntimeException("audit down"));
+
+        assertThatThrownBy(() -> service.upload(pdf("again.pdf")))
+                .isInstanceOf(DuplicateFileException.class);
+
+        verifyNoInteractions(storageService);
     }
 
     // ---------- failure cleanup ----------
@@ -225,12 +247,8 @@ class InvoiceUploadServiceTest {
 
     private void stubSystemUser() {
         when(userRepository.findById(InvoiceUploadService.SYSTEM_USER_ID))
-                .thenReturn(Optional.of(UserEntity.builder().build()));
-    }
-
-    private AuditLogEntity captureAudit() {
-        ArgumentCaptor<AuditLogEntity> captor = ArgumentCaptor.forClass(AuditLogEntity.class);
-        verify(auditLogRepository).save(captor.capture());
-        return captor.getValue();
+                .thenReturn(Optional.of(UserEntity.builder()
+                        .userId(InvoiceUploadService.SYSTEM_USER_ID)
+                        .build()));
     }
 }
