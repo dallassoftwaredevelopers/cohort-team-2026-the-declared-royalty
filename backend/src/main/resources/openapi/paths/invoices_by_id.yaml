@@ -61,17 +61,3 @@
           application/json:
             schema:
               $ref: '../components/schemas/ErrorResponse.yaml'
-  delete:
-    tags:
-      - Invoices
-    summary: Delete an invoice
-    operationId: deleteInvoice
-    responses:
-      '204':
-        description: Invoice successfully deleted
-      '404':
-        description: Invoice not found
-        content:
-          application/json:
-            schema:
-              $ref: '../components/schemas/ErrorResponse.yaml'
