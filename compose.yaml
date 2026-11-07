@@ -17,7 +17,7 @@ services:
       MINIO_USER: ${MINIO_USER}
       MINIO_PASSWORD: ${MINIO_PASSWORD}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LLM_API_KEY: ${LLM_API_KEY}
     ports:
       - "8080:8080"
     depends_on:

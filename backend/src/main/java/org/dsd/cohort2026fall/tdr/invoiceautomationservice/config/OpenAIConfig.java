@@ -7,15 +7,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class OpenAiConfig {
+public class OpenAIConfig {
 
-    @Value("${openai.api-key}")
-    private String openAiApiKey;
+    @Value("${llm.api-key}")
+    private String llmApiKey;
 
     @Bean
     public OpenAIClient openAIClient() {
         return OpenAIOkHttpClient.builder()
-                .apiKey(openAiApiKey)
+                .apiKey(llmApiKey)
+                .baseUrl("https://openrouter.ai/api/v1")
                 .build();
     }
 }

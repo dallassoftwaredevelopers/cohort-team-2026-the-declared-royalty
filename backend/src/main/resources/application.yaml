@@ -33,8 +33,8 @@ management:
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
 
-openai:
-  api-key: ${OPENAI_API_KEY:-test-api-key}
+llm:
+  api-key: ${LLM_API_KEY:-test-api-key}
 
 minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}

@@ -37,7 +37,7 @@ public class AiRequestService {
 //    generates request parameters for the AI model based on the internal prompt and openAPI schema
     private ResponseCreateParams getRequestParams(InvoiceUploadService.InvoiceFile invoiceFile) {
         return ResponseCreateParams.builder()
-                .model("gpt-6-astra")
+                .model("openai/gpt-4o")
                     .inputOfResponse(
                             List.of(
 //                                    provides the prompt to the AI model for processing
