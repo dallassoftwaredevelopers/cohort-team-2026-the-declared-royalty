@@ -75,9 +75,3 @@ components:
       $ref: './components/schemas/InvoicePageResponse.yaml'
     InvoiceStatus:
       $ref: './components/schemas/InvoiceStatus.yaml'
-    InvoiceUploadResponse:
-      $ref: './components/schemas/InvoiceUploadResponse.yaml'
-    DuplicateCheckRequest:
-      $ref: './components/schemas/DuplicateCheckRequest.yaml'
-    DuplicateCheckResponse:
-      $ref: './components/schemas/DuplicateCheckResponse.yaml'
