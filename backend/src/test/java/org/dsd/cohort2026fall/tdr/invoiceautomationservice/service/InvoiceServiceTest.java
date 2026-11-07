@@ -87,4 +87,15 @@ class InvoiceServiceTest {
         assertThrows(InvalidInvoiceException.class, () -> invoiceService.createInvoice(request));
         verify(invoiceRepository, never()).save(any(InvoiceEntity.class));
     }
+
+    @Test
+    void deleteInvoiceDeletesExistingInvoice() {
+        UUID invoiceUuid = UUID.randomUUID();
+        InvoiceEntity invoice = InvoiceEntity.builder().invoiceId(invoiceUuid).build();
+        when(invoiceRepository.findById(invoiceUuid)).thenReturn(Optional.of(invoice));
+
+        invoiceService.deleteInvoice(invoiceUuid);
+
+        verify(invoiceRepository).delete(invoice);
+    }
 }

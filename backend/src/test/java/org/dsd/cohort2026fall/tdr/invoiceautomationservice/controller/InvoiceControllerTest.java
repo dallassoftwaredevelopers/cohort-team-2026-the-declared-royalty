@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -89,6 +90,16 @@ class InvoiceControllerTest {
                 .andExpect(jsonPath("$.invoiceUuid").value(invoiceUuid.toString()));
 
         verify(invoiceService).updateInvoice(eq(invoiceUuid), any());
+    }
+
+    @Test
+    void deleteInvoiceCallsServiceAndReturnsNoContent() throws Exception {
+        UUID invoiceUuid = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/invoices/{invoiceUuid}", invoiceUuid))
+                .andExpect(status().isNoContent());
+
+        verify(invoiceService).deleteInvoice(invoiceUuid);
     }
 
     private InvoiceResponse invoiceResponse(UUID invoiceUuid, UUID mappingUuid) {

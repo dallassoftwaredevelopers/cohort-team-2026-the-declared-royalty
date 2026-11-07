@@ -133,6 +133,10 @@ public class InvoiceService {
         return toResponse(invoiceRepository.save(invoice));
     }
 
+    public void deleteInvoice(UUID invoiceUuid) {
+        invoiceRepository.delete(findInvoice(invoiceUuid));
+    }
+
     private InvoiceEntity findInvoice(UUID invoiceUuid) {
         return invoiceRepository.findById(invoiceUuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceUuid));
