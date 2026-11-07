@@ -39,10 +39,4 @@ public class InvoiceController implements InvoicesApi {
     public ResponseEntity<InvoiceResponse> patchInvoice(UUID invoiceUuid, InvoiceUpdateRequest invoiceUpdateRequest) {
         return ResponseEntity.ok(invoiceService.updateInvoice(invoiceUuid, invoiceUpdateRequest));
     }
-
-    @Override
-    public ResponseEntity<Void> deleteInvoice(UUID invoiceUuid) {
-        invoiceService.deleteInvoice(invoiceUuid);
-        return ResponseEntity.noContent().build();
-    }
 }
