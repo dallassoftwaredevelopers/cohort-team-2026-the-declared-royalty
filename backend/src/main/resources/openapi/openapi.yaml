@@ -28,6 +28,8 @@ paths:
     $ref: './paths/invoice_uploads.yaml'
   /api/v1/invoices/upload/check-duplicates:
     $ref: './paths/invoice_upload_check_duplicates.yaml'
+  /api/v1/invoices/{invoiceId}/file:
+    $ref: './paths/invoice_file.yaml'
 
 components:
   parameters:

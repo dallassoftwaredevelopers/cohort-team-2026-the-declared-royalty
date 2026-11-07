@@ -4,6 +4,7 @@ import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.UserEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.DuplicateFileException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvalidFileException;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.ResourceNotFoundException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.InvoiceRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.UserRepository;
@@ -18,6 +19,8 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -239,6 +242,55 @@ class InvoiceUploadServiceTest {
         assertThat(result.getOriginalFilename()).isEqualTo("october-water.pdf");
     }
 
+    // ---------- load files -----------
+
+    @Test
+    void load_pdf_returnsStreamTypeAndOriginalFilename() {
+        UUID id = UUID.randomUUID();
+        InputStream stream = new ByteArrayInputStream("%PDF-1.4".getBytes());
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice(id, "invoices/abc.pdf", "water-oct.pdf")));
+        when(storageService.load("invoices/abc.pdf")).thenReturn(stream);
+
+        InvoiceUploadService.InvoiceFile file = service.loadFile(id);
+
+        assertThat(file.content()).isSameAs(stream);
+        assertThat(file.contentType()).isEqualTo("application/pdf");
+        assertThat(file.filename()).isEqualTo("water-oct.pdf");
+    }
+
+    @Test
+    void load_png_returnsImageContentType() {
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice(id, "invoices/abc.png", "scan.png")));
+        when(storageService.load("invoices/abc.png")).thenReturn(new ByteArrayInputStream(new byte[0]));
+
+        assertThat(service.loadFile(id).contentType()).isEqualTo("image/png");
+    }
+
+    @Test
+    void load_unknownInvoice_throwsNotFound_andNeverTouchesStorage() {
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.loadFile(id))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Invoice not found");
+
+        verifyNoInteractions(storageService);
+    }
+
+    @Test
+    void load_invoiceWithoutFile_throwsNotFound() {
+        UUID id = UUID.randomUUID();
+        when(invoiceRepository.findById(id)).thenReturn(Optional.of(invoice(id, null, null)));
+
+        assertThatThrownBy(() -> service.loadFile(id))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("has no file");
+
+        verifyNoInteractions(storageService);
+    }
+
     // ---------- helpers ----------
 
     private MockMultipartFile pdf(String filename) {
@@ -250,5 +302,14 @@ class InvoiceUploadServiceTest {
                 .thenReturn(Optional.of(UserEntity.builder()
                         .userId(InvoiceUploadService.SYSTEM_USER_ID)
                         .build()));
+    }
+
+    private InvoiceEntity invoice(UUID id, String key, String filename) {
+        return InvoiceEntity.builder()
+                .invoiceId(id)
+                .invoiceStatus("INGESTED")
+                .blobFileUrl(key)
+                .originalFilename(filename)
+                .build();
     }
 }
