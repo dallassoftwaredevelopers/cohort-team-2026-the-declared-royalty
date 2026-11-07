@@ -1,0 +1,67 @@
+get:
+  summary: Download an uploaded invoice file
+  operationId: getUploadedInvoice
+  tags:
+    - Invoice Uploads
+  parameters:
+    - name: invoiceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Uploaded invoice file
+      content:
+        application/pdf:
+          schema:
+            type: string
+            format: binary
+        image/png:
+          schema:
+            type: string
+            format: binary
+        image/jpeg:
+          schema:
+            type: string
+            format: binary
+    '404':
+      description: Invoice or uploaded file not found
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '503':
+      description: File storage unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+delete:
+  summary: Delete an uploaded invoice file
+  operationId: deleteUploadedInvoice
+  tags:
+    - Invoice Uploads
+  parameters:
+    - name: invoiceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '204':
+      description: Uploaded invoice file deleted and invoice voided
+    '404':
+      description: Invoice or uploaded file not found
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
+    '503':
+      description: File storage unavailable
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'
