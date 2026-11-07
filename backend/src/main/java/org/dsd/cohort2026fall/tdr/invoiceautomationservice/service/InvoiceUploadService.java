@@ -6,6 +6,7 @@ import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.UserEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.DuplicateFileException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvalidFileException;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.ResourceNotFoundException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.StorageException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.AuditLogCreateRequest;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.InvoiceRepository;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.apache.tika.Tika;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -39,6 +41,12 @@ public class InvoiceUploadService {
             "application/pdf", "pdf",
             "image/png", "png",
             "image/jpeg", "jpg"
+    );
+
+    private static final Map<String, String> CONTENT_TYPES = Map.of(
+            "pdf", "application/pdf",
+            "png", "image/png",
+            "jpg", "image/jpeg"
     );
 
     private final InvoiceRepository invoiceRepository;
@@ -112,6 +120,26 @@ public class InvoiceUploadService {
         }
     }
 
+    public record InvoiceFile(InputStream content, String contentType, String filename) {}
+
+    /** Opens the invoice's original file. The caller must close the stream. */
+    public InvoiceFile loadFile(UUID invoiceId) {
+        InvoiceEntity invoice = invoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceId));
+
+        String key = invoice.getBlobFileUrl();
+        if (key == null || key.isBlank()) {
+            throw new ResourceNotFoundException("Invoice has no file: " + invoiceId);
+        }
+
+        String contentType = CONTENT_TYPES.getOrDefault(extension(key), "application/octet-stream");
+        String filename = invoice.getOriginalFilename() != null
+                ? invoice.getOriginalFilename()
+                : key.substring(key.lastIndexOf('/') + 1);
+
+        return new InvoiceFile(storageService.load(key), contentType, filename);
+    }
+
     private void recordDuplicateAttempt(InvoiceEntity original, String filename) {
         try {
             auditLogService.record(
@@ -160,5 +188,10 @@ public class InvoiceUploadService {
     public List<String> findExistingHashes(List<String> hashes) {
         if (hashes == null || hashes.isEmpty()) return List.of();
         return invoiceRepository.findExistingHashes(new HashSet<>(hashes));
+    }
+
+    private String extension(String key) {
+        int dot = key.lastIndexOf('.');
+        return dot < 0 ? "" : key.substring(dot + 1).toLowerCase();
     }
 }
