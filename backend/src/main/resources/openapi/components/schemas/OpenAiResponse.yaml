@@ -6,6 +6,8 @@ properties:
   extractedValues:
     type: object
     additionalProperties: false
+#    To add a new field, add it to the properties section below and add it to the required list.
+#    If the field is a string, use $ref: '#/$defs/StringField', if it is a number, use $ref: '#/$defs/NumberField'
     properties:
       vendor_name:
         $ref: '#/$defs/StringField'
