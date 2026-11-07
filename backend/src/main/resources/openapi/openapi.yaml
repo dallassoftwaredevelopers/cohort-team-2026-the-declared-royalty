@@ -24,6 +24,10 @@ paths:
     $ref: './paths/audit_logs.yaml'
   /api/v1/audit-logs/{auditUuid}:
     $ref: './paths/audit_logs_by_id.yaml'
+  /api/v1/invoices:
+    $ref: './paths/invoices.yaml'
+  /api/v1/invoices/{invoiceUuid}:
+    $ref: './paths/invoices_by_id.yaml'
   /api/v1/invoices/upload:
     $ref: './paths/invoice_uploads.yaml'
   /api/v1/invoices/upload/check-duplicates:
@@ -63,9 +67,13 @@ components:
       $ref: './components/schemas/AuditLogCreateRequest.yaml'
     AuditLogResponse:
       $ref: './components/schemas/AuditLogResponse.yaml'
-    InvoiceUploadResponse:
-      $ref: './components/schemas/InvoiceUploadResponse.yaml'
-    DuplicateCheckRequest:
-      $ref: './components/schemas/DuplicateCheckRequest.yaml'
-    DuplicateCheckResponse:
-      $ref: './components/schemas/DuplicateCheckResponse.yaml'
+    InvoiceResponse:
+      $ref: './components/schemas/InvoiceResponse.yaml'
+    InvoiceCreateRequest:
+      $ref: './components/schemas/InvoiceCreateRequest.yaml'
+    InvoiceUpdateRequest:
+      $ref: './components/schemas/InvoiceUpdateRequest.yaml'
+    InvoicePageResponse:
+      $ref: './components/schemas/InvoicePageResponse.yaml'
+    InvoiceStatus:
+      $ref: './components/schemas/InvoiceStatus.yaml'

@@ -1,0 +1,11 @@
+type: string
+enum:
+  - INGESTED
+  - PENDING_MAPPING
+  - PENDING_APPROVAL
+  - APPROVED
+  - PAID
+  - FAILED
+  - PROCESSING_PAYMENT
+  - VOID
+example: INGESTED

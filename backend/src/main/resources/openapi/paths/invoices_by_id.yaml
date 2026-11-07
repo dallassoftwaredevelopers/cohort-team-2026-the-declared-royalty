@@ -1,0 +1,63 @@
+  parameters:
+    - name: invoiceUuid
+      in: path
+      required: true
+      description: Unique UUID of the invoice
+      schema:
+        type: string
+        format: uuid
+  get:
+    tags:
+      - Invoices
+    summary: Get an invoice by UUID
+    operationId: getInvoiceByUuid
+    responses:
+      '200':
+        description: Invoice found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/InvoiceResponse.yaml'
+      '404':
+        description: Invoice not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/ErrorResponse.yaml'
+  patch:
+    tags:
+      - Invoices
+    summary: Partially update an invoice
+    description: Only supplied non-null fields are updated. The invoice UUID and createdAt remain unchanged.
+    operationId: patchInvoice
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/InvoiceUpdateRequest.yaml'
+    responses:
+      '200':
+        description: Invoice successfully updated
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/InvoiceResponse.yaml'
+      '400':
+        description: Invalid request or billing period
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/ErrorResponse.yaml'
+      '404':
+        description: Invoice not found or referencing an invalid mappingUuid
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/ErrorResponse.yaml'
+      '409':
+        description: The updated invoice would duplicate another invoice for this mapping
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/ErrorResponse.yaml'

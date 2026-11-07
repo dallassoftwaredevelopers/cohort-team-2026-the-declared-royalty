@@ -1,0 +1,58 @@
+type: object
+required:
+  - invoiceUuid
+  - mappingUuid
+  - invoiceStatus
+  - createdAt
+  - updatedAt
+properties:
+  invoiceUuid:
+    type: string
+    format: uuid
+    example: "a1b2c3d4-e5f6-7890-abcd-ef0123456789"
+  mappingUuid:
+    type: string
+    format: uuid
+    example: "f9e8d7c6-b5a4-3210-fedc-ba9876543210"
+  vendorSuppliedInvoiceId:
+    type: string
+    nullable: true
+  billingPeriodStart:
+    type: string
+    format: date
+    nullable: true
+  billingPeriodEnd:
+    type: string
+    format: date
+    nullable: true
+  invoiceCreationDate:
+    type: string
+    format: date
+    nullable: true
+  amount:
+    type: number
+    multipleOf: 0.01
+    nullable: true
+  dueDate:
+    type: string
+    format: date
+    nullable: true
+  invoiceStatus:
+    $ref: './InvoiceStatus.yaml'
+  failureReason:
+    type: string
+    nullable: true
+  blobFileUrl:
+    type: string
+    nullable: true
+  blobFileSha256:
+    type: string
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+    example: "2026-06-06T12:00:00Z"
+  updatedAt:
+    type: string
+    format: date-time
+    example: "2026-06-06T12:00:00Z"
