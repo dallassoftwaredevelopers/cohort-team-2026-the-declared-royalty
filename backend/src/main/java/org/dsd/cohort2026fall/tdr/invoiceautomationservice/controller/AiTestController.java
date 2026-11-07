@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.UUID;
 
-// This controller is just for testing, I'll delete it later
+// This controller is just for testing, it should be deleted once this logic is integrated into the Invoice flow
 @RestController("/ai")
-public class TempController {
+public class AiTestController {
 
     @Autowired
     private InvoiceAnalysisService invoiceAnalysisService;
