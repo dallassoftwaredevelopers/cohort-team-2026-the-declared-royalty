@@ -22,7 +22,6 @@ export type AuditLogs = {
     updatedAt: string,
 }
 
-// invoice and user are UUIDs, not nested objects
 export type AuditLogsResponse = {
     auditLogId: string,
     invoice: string,
@@ -31,7 +30,7 @@ export type AuditLogsResponse = {
     actionTaken: string,
     fromState: string,
     toState: string,
-    notes: string,
+    notes: string | null,
     createdAt: string,
     updatedAt: string,
 }
