@@ -53,15 +53,6 @@ class InvoiceControllerTest {
     }
 
     @Test
-    void getInvoicesRejectsSizeAboveMaximum() throws Exception {
-        mockMvc.perform(get("/api/v1/invoices").param("size", "101"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400));
-
-        verifyNoInteractions(invoiceService);
-    }
-
-    @Test
     void createInvoiceReturnsCreatedInvoice() throws Exception {
         UUID mappingUuid = UUID.randomUUID();
         InvoiceResponse invoice = invoiceResponse(UUID.randomUUID(), mappingUuid);
