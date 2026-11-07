@@ -5,6 +5,7 @@ import com.openai.core.JsonValue;
 import com.openai.models.responses.*;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
+import lombok.RequiredArgsConstructor;
 import net.minidev.json.JSONObject;
 import net.minidev.json.JSONValue;
 import org.springframework.stereotype.Service;
@@ -15,85 +16,32 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AiRequestService {
 
     private final OpenAIClient client;
+    private final InvoiceUploadService invoiceUploadService;
 
-    public AiRequestService(OpenAIClient client) {
-        this.client = client;
-    }
-
-    public String testConnection() {
-        Map<String, Object> schema =
-                Map.of(
-                        "type", "object",
-                        "properties", Map.of(
-                                "name", Map.of("type", "string"),
-                                "date", Map.of("type", "string"),
-                                "participants", Map.of("type", "array", "items", Map.of("type", "string"))),
-                        "required", List.of("name", "date", "participants"),
-                        "additionalProperties", false
-                );
-
-        ResponseCreateParams params =
-                ResponseCreateParams.builder()
-                        .model("gpt-6-astra")
-                        .inputOfResponse(
-                                List.of(
-                                        ResponseInputItem.ofEasyInputMessage(
-                                                EasyInputMessage.builder()
-                                                        .role(EasyInputMessage.Role.SYSTEM)
-                                                        .content("Extract the event information.")
-                                                        .build()),
-                                        ResponseInputItem.ofEasyInputMessage(
-                                                EasyInputMessage.builder()
-                                                        .role(EasyInputMessage.Role.USER)
-                                                        .content("Alice and Bob are going to a science fair on Friday.")
-                                                        .build())))
-                        .text(
-                                ResponseTextConfig.builder()
-                                        .format(
-                                                ResponseFormatTextJsonSchemaConfig.builder()
-                                                        .name("event")
-                                                        .strict(true)
-                                                        .schema(
-                                                                JsonValue.from(schema)
-                                                                        .convert(ResponseFormatTextJsonSchemaConfig.Schema.class))
-                                                        .build())
-                                        .build())
-                        .build();
-        return client.responses().create(params).output().stream()
-                .flatMap(item -> item.message().stream())
-                .flatMap(message -> message.content().stream())
-                .flatMap(content -> content.outputText().stream())
-                .map(text -> text.text())
-                .collect(Collectors.joining("\n"));
-    }
-
-    public String analyzeInvoice() {
-        String promptFilePath = "/llm.resources/llm_prompt.txt";
-        String schemaFilePath = "/llm.resources/llm_request.json";
-        String invoiceName = "invoices/alder-creek-bill.pdf";
-
-        JSONObject extractedValuesStructure = getJsonFromFile("/llm.resources/extracted_values_list.json");
-
-        ResponseCreateParams requestParams = getRequestParams(promptFilePath, invoiceName, schemaFilePath, extractedValuesStructure);
+//    sends a request to the AI model to analyze the invoice (based on its UUID within the blob storage) and returns the extracted values as a string
+    public String analyzeInvoice(UUID invoiceId) {
+        ResponseCreateParams requestParams = getRequestParams(invoiceUploadService.loadFile(invoiceId));
         return client.responses().create(requestParams).output().stream()
                 .flatMap(item -> item.message().stream())
                 .flatMap(message -> message.content().stream())
                 .flatMap(content -> content.outputText().stream())
-                .map(text -> text.text())
+                .map(ResponseOutputText::text)
                 .collect(Collectors.joining("\n"));
     }
 
-
-
 //    https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=responses&lang=java
 //    generates request parameters for the AI model based on the provided prompt and schema file paths
-    private ResponseCreateParams getRequestParams(String promptFilePath, String invoiceName, String schemaFilePath, JSONObject extractedValuesStructure) {
+    private ResponseCreateParams getRequestParams(InvoiceUploadService.InvoiceFile invoiceFile) {
+        String schemaFilePath = "/llm.resources/llm_request.json";
+        JSONObject extractedValuesStructure = getJsonFromFile("/llm.resources/extracted_values_list.json");
         return ResponseCreateParams.builder()
                 .model("gpt-6-astra")
                     .inputOfResponse(
@@ -102,7 +50,7 @@ public class AiRequestService {
                                     ResponseInputItem.ofEasyInputMessage(
                                             EasyInputMessage.builder()
                                                     .role(EasyInputMessage.Role.SYSTEM)
-                                                    .content(getPrompt(promptFilePath))
+                                                    .content(getPrompt())
                                                     .build()),
 //                                    provides the byte data of the invoice as a base64-encoded data URL to the AI model for processing
                                     ResponseInputItem.ofEasyInputMessage(
@@ -113,9 +61,8 @@ public class AiRequestService {
                                                                     // Define the file block with filename and data URI
                                                                     ResponseInputContent.ofInputFile(
                                                                             ResponseInputFile.builder()
-                                                                                    .filename(invoiceName + ".pdf")
-                                                                                    .fileData(getInvoiceBase64DataUrl(invoiceName)) // Ensure this starts with "data:application/pdf;base64,"
-//                                                                                    .detail(ResponseInputFile.Detail.HIGH) // Optional: HIGH details for text-heavy invoices
+                                                                                    .filename(invoiceFile.filename())
+                                                                                    .fileData(getInvoiceBase64DataUrl(invoiceFile)) // Ensure this starts with "data:application/pdf;base64,"
                                                                                     .build()
                                                                     ))))
                                                     .build())))
@@ -232,7 +179,8 @@ public class AiRequestService {
 
 //    reads a prompt from the specified file path and returns it as a string
 //    expected prompt filepath: "src/main/resources/llm.resources/llm_prompt.txt"
-    private String getPrompt(String filePath){
+    private String getPrompt(){
+        String filePath = "/llm.resources/llm_prompt.txt";
         try (var reader = new InputStreamReader(
                 getClass().getResourceAsStream(filePath),
                 StandardCharsets.UTF_8)) {
@@ -251,27 +199,24 @@ public class AiRequestService {
     }
 
 //    reads an invoice file from MinIO storage using getInvoiceBase64 and returns its byte data as a base64-encoded data URL
-    private String getInvoiceBase64DataUrl(String filename){
-        return "data:application/pdf;base64," + java.util.Base64.getEncoder().encodeToString(getInvoiceBase64(filename));
-    }
-
-//    reads an invoice file from MinIO storage and returns its byte data as a byte array
-    private byte[] getInvoiceBase64(String filename){
-
-        try(
-                InputStream stream = MinioClient.builder()
-                        .endpoint("http://minio:9000")
-                        .credentials("minio_user","minio_password")
-                        .build()
-                        .getObject(
-                                GetObjectArgs.builder()
-                                        .bucket("invoices")
-                                        .object(filename)
-                                        .build()
-                        )){
-            return stream.readAllBytes();
+//    private String getInvoiceBase64DataUrl(String filename){
+//        return "data:application/pdf;base64," + java.util.Base64.getEncoder().encodeToString(getInvoiceBase64(filename));
+//    }
+    private String getInvoiceBase64DataUrl(InvoiceUploadService.InvoiceFile invoiceFile){
+        byte[] data = null;
+        try{
+            InputStream stream = invoiceFile.content();
+            data = stream.readAllBytes();
+            stream.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        return "data:"+ getType(invoiceFile.filename()) + ";base64," + java.util.Base64.getEncoder().encodeToString(data);
     }
+
+    private String getType(String filename) {
+        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
+        return invoiceUploadService.getContentTypes().getOrDefault(extension, "application/octet-stream");
+    }
+
 }
