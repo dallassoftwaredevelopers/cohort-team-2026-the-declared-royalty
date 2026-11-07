@@ -1,0 +1,65 @@
+type: object
+additionalProperties: false
+properties:
+  error:
+    type: string
+  extractedValues:
+    type: object
+    additionalProperties: false
+    properties:
+      vendor_name:
+        $ref: '#/$defs/StringField'
+      property_address:
+        $ref: '#/$defs/StringField'
+      property_name:
+        $ref: '#/$defs/StringField'
+      total_amount_due:
+        $ref: '#/$defs/NumberField'
+      payment_due_date:
+        $ref: '#/$defs/StringField'
+      invoice_number:
+        $ref: '#/$defs/StringField'
+    required:
+      - vendor_name
+      - property_address
+      - property_name
+      - total_amount_due
+      - payment_due_date
+      - invoice_number
+required:
+  - error
+  - extractedValues
+
+$defs:
+
+  StringField:
+    type: object
+    additionalProperties: false
+    properties:
+      value:
+        type:
+          - string
+          - "null"
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+    required:
+      - value
+      - confidence
+
+  NumberField:
+    type: object
+    additionalProperties: false
+    properties:
+      value:
+        type:
+          - number
+          - "null"
+      confidence:
+        type: number
+        minimum: 0
+        maximum: 1
+    required:
+      - value
+      - confidence
