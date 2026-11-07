@@ -19,6 +19,11 @@ export type PropertyCreateRequest = {
     zipCode: string,
 }
 
+// For PUT /api/v1/properties/{propertyId} (being built by the backend team).
+// The form sends all five fields, which works whether the endpoint does a full
+// replace or a partial update like PUT /api/v1/vendors/{vendorUuid}.
+export type PropertyUpdateRequest = Partial<PropertyCreateRequest>;
+
 export type PropertyResponse = {
     propertyId: string,
     name: string,

@@ -1,9 +1,9 @@
-import { API_BASE_URL, apiClient } from "./apiClient";
+import { API_BASE_URL, apiClient } from "@/app/services/apiClient";
 import type {
   DuplicateCheckResponse,
   ErrorResponse,
   InvoiceUploadResponse,
-} from "../../types/invoiceUpload";
+} from "@/types/invoiceUpload";
 
 const UPLOAD_URL = "/api/v1/invoices/upload";
 const CHECK_BATCH_SIZE = 50; // matches maxItems in the API contract
@@ -32,6 +32,10 @@ async function readErrorMessage(response: Response): Promise<string> {
 /**
  * Uploads one file. Uses fetch directly instead of apiClient because apiClient
  * forces a JSON Content-Type; multipart needs the browser to set its own boundary.
+ *
+ * TODO(auth): because this bypasses apiClient, it will NOT get the token
+ * automatically. Add the Authorization header here (export getAuthHeader from
+ * apiClient), and handle 401 the same way apiClient does.
  */
 export async function uploadInvoice(file: File): Promise<InvoiceUploadResponse> {
   const body = new FormData();
@@ -55,6 +59,7 @@ export async function checkExistingHashes(hashes: string[]): Promise<string[]> {
   const unique = [...new Set(hashes)];
   const found: string[] = [];
 
+  // TODO(auth): passes withAuth=false below; drop `undefined, false` once login exists
   for (let i = 0; i < unique.length; i += CHECK_BATCH_SIZE) {
     const result = await apiClient.post<DuplicateCheckResponse, { hashes: string[] }>(
       `${UPLOAD_URL}/check-duplicates`,

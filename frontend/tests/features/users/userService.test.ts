@@ -5,7 +5,7 @@ import {
   getUserByUserId,
   getUsers,
   updateUserByUserId,
-} from "@/app/services/userService";
+} from "@/features/users/userService";
 import type { UserResponse } from "@/types/user";
 
 const BASE_URL = "http://localhost:8080/api/v1/users";

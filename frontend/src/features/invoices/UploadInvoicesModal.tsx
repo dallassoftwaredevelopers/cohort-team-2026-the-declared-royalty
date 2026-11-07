@@ -13,8 +13,8 @@ import {
   ApiError,
   checkExistingHashes,
   uploadInvoice,
-} from "../app/services/invoiceUploadService";
-import { sha256Hex } from "../utils/fileHash";
+} from "./invoiceUploadService";
+import { sha256Hex } from "./fileHash";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
