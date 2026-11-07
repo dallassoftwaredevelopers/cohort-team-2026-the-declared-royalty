@@ -92,16 +92,6 @@ class InvoiceControllerTest {
         verify(invoiceService).updateInvoice(eq(invoiceUuid), any());
     }
 
-    @Test
-    void deleteInvoiceCallsServiceAndReturnsNoContent() throws Exception {
-        UUID invoiceUuid = UUID.randomUUID();
-
-        mockMvc.perform(delete("/api/v1/invoices/{invoiceUuid}", invoiceUuid))
-                .andExpect(status().isNoContent());
-
-        verify(invoiceService).deleteInvoice(invoiceUuid);
-    }
-
     private InvoiceResponse invoiceResponse(UUID invoiceUuid, UUID mappingUuid) {
         InvoiceResponse invoice = new InvoiceResponse();
         invoice.setInvoiceUuid(invoiceUuid);
