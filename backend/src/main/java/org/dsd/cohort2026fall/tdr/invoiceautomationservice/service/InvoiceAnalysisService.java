@@ -16,7 +16,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AiRequestService {
+// service that handles the analysis of invoices using an AI model to extract structured data from uploaded invoice files
+public class InvoiceAnalysisService {
 
     private final OpenAIClient client;
     private final InvoiceUploadService invoiceUploadService;
