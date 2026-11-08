@@ -38,7 +38,7 @@ public class InvoiceAnalysisService {
 //    generates request parameters for the AI model based on the internal prompt and openAPI schema
     private ResponseCreateParams getRequestParams(InvoiceUploadService.InvoiceFile invoiceFile) {
         return ResponseCreateParams.builder()
-                .model("openai/gpt-4o")
+                .model("openrouter/free")
                     .inputOfResponse(
                             List.of(
 //                                    provides the prompt to the AI model for processing
