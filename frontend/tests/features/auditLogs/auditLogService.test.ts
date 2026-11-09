@@ -3,7 +3,7 @@ import {
   createAuditLog,
   getAuditLogById,
   getAuditLogs,
-} from "@/app/services/auditLogService";
+} from "@/features/auditLogs/auditLogService";
 import type { AuditLogCreateRequest, AuditLogsResponse } from "@/types/auditlogs";
 
 const BASE_URL = "http://localhost:8080/api/v1/audit-logs";
