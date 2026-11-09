@@ -19,6 +19,28 @@ export const API_BASE_URL = "http://localhost:8080";
 //   return {};
 // }
 
+// Thrown for non-2xx responses. Still an Error (same message as before), plus the
+// status so callers can tell e.g. 404, 405 and 409 apart.
+export class HttpError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "HttpError";
+    this.status = status;
+  }
+}
+
+// TODO(auth): when login is integrated
+//   1. Implement getAuthHeader() with the chosen provider (the commented Supabase
+//      version above is one option; the auth provider is still an open team decision)
+//      and uncomment the call in request() below.
+//   2. Handle 401 Unauthorized in request(): refresh the token or clear the session
+//      and send the user to the sign-in page, instead of throwing a generic error.
+//   3. Callers that pass withAuth=false (propertyService, vendorService,
+//      invoiceUploadService) and apiClient.delete's false default must be switched
+//      to send the token. Search for "TODO(auth)" to find them all.
+
 /**
  * Make a request to the API
  * @param endpoint The endpoint to request
@@ -45,7 +67,8 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    throw new Error(
+    throw new HttpError(
+      response.status,
       `Request failed with status ${response.status}: ${response.statusText}`,
     );
   }
@@ -155,6 +178,8 @@ export const apiClient = {
    * @param headers The headers for the request
    * @returns The response from the API
    */
+  // TODO(auth): defaults to false, unlike get/post/put/patch; change to true so
+  // deletes (e.g. deactivating a user) send the token
   delete: <T>(url: string, headers?: HeadersInit, withAuth?: boolean) =>
     request<T>(url, { method: "DELETE", headers }, withAuth ?? false),
 };

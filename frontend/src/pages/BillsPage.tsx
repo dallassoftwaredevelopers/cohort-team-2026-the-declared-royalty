@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FiPlus } from "react-icons/fi";
-import UploadInvoicesModal from "../components/UploadInvoicesModal";
+import UploadInvoicesModal from "@/features/invoices/UploadInvoicesModal";
 
 export default function BillsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);

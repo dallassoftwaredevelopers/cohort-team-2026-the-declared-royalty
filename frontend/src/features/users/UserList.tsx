@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getUsers } from "../app/services/userService";
-import type { UserResponse } from "../types/user";
+import { getUsers } from "./userService";
+import type { UserResponse } from "@/types/user";
 
 function UserList() {
   const [users, setUsers] = useState<UserResponse[]>([]);

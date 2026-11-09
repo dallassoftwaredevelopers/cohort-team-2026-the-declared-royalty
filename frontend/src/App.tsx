@@ -1,47 +1,59 @@
 import { useEffect, useState } from "react";
-import AppShell, { type AppRoute } from "./components/AppShell";
+import AppShell from "./layout/AppShell";
+import type { AppRoute } from "./types/route";
 import WorkspacePage from "./pages/WorkspacePage";
 import BillsPage from "./pages/BillsPage";
-import { TbBlocks } from "react-icons/tb";
+import PropertiesPage from "./pages/PropertiesPage";
+import VendorsPage from "./pages/VendorsPage";
+import {
+  TbAlertTriangle,
+  TbBlocks,
+  TbBuilding,
+  TbBuildingStore,
+  TbCircleCheck,
+  TbCreditCard,
+  TbFileInvoice,
+  TbHistory,
+} from "react-icons/tb";
 
 const routes: AppRoute[] = [
-  { label: "Dashboard", path: "/", section: "WORKSPACE", icon: <TbBlocks /> },
-  { label: "Bills", path: "/bills", section: "OPERATIONS", icon: "017af.svg" },
+  { label: "Dashboard", path: "/", section: "WORKSPACE", icon: TbBlocks },
+  { label: "Bills", path: "/bills", section: "OPERATIONS", icon: TbFileInvoice },
   {
     label: "Properties",
     path: "/properties",
     section: "OPERATIONS",
-    icon: "dd3a1.svg",
+    icon: TbBuilding,
   },
   {
     label: "Vendors",
     path: "/vendors",
     section: "OPERATIONS",
-    icon: "3634d.svg",
+    icon: TbBuildingStore,
   },
   {
     label: "Approvals",
     path: "/approvals",
     section: "OPERATIONS",
-    icon: "ca993.svg",
+    icon: TbCircleCheck,
   },
   {
     label: "Payments",
     path: "/payments",
     section: "OPERATIONS",
-    icon: "d5f6b.svg",
+    icon: TbCreditCard,
   },
   {
     label: "Exceptions",
     path: "/exceptions",
     section: "OPERATIONS",
-    icon: "d9b46.svg",
+    icon: TbAlertTriangle,
   },
   {
     label: "Activity & Audit Logs",
     path: "/activity",
     section: "OVERSIGHT",
-    icon: "a294b.svg",
+    icon: TbHistory,
   },
 ];
 
@@ -68,10 +80,17 @@ export default function App() {
     setPath(nextPath);
   };
 
+  // TODO(auth): add a sign-in page (e.g. /login, outside AppShell) and guard the
+  // routes below: while the session is loading show a loader, and when there's no
+  // session send the user to /login, then back to the page they asked for.
   return (
     <AppShell currentRoute={currentRoute} onNavigate={navigate} routes={routes}>
       {currentRoute.path === "/bills" ? (
         <BillsPage />
+      ) : currentRoute.path === "/properties" ? (
+        <PropertiesPage />
+      ) : currentRoute.path === "/vendors" ? (
+        <VendorsPage />
       ) : (
         <WorkspacePage title={currentRoute.label} />
       )}

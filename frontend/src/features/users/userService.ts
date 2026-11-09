@@ -1,9 +1,9 @@
-import { apiClient } from "./apiClient";
+import { apiClient } from "@/app/services/apiClient";
 import type {
   UserCreateRequest,
   UserResponse,
   UserUpdateRequest,
-} from "../../types/user";
+} from "@/types/user";
 
 const USERS_URL = "/api/v1/users";
 
