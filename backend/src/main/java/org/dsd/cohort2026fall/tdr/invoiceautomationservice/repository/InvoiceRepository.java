@@ -24,6 +24,11 @@ public interface InvoiceRepository extends JpaRepository<InvoiceEntity, UUID>, J
     Optional<InvoiceEntity> findByMapping_Vendor_VendorIdAndVendorSuppliedInvoiceIdAndBillingPeriodEnd(
             UUID vendorId, String vendorSuppliedInvoiceId, LocalDate billingPeriodEnd);
 
+    boolean existsByMapping_MappingIdAndVendorSuppliedInvoiceIdAndBillingPeriodEnd(
+            UUID mappingUuid, String vendorInvoiceId, LocalDate billingPeriodEnd);
+
+    boolean existsByMapping_MappingIdAndVendorSuppliedInvoiceIdAndBillingPeriodEndAndInvoiceIdNot(
+            UUID mappingUuid, String vendorInvoiceId, LocalDate billingPeriodEnd, UUID currentInvoiceUuid);
 
     Optional<InvoiceEntity> findByBlobFileSha256(String blobFileSha256);
 

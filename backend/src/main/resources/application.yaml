@@ -33,6 +33,9 @@ management:
 frontend:
   url: ${FRONTEND_URL:http://localhost:5173}
 
+llm:
+  api-key: ${LLM_API_KEY:-test-api-key}
+
 minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
   access-key: ${MINIO_USER:minio_user}

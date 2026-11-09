@@ -1,0 +1,24 @@
+type: object
+required:
+  - items
+  - page
+  - size
+  - totalElements
+  - totalPages
+properties:
+  items:
+    type: array
+    items:
+      $ref: './InvoiceResponse.yaml'
+  page:
+    type: integer
+    minimum: 0
+  size:
+    type: integer
+    minimum: 1
+  totalElements:
+    type: integer
+    format: int64
+  totalPages:
+    type: integer
+    minimum: 0

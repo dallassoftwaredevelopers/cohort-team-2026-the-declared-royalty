@@ -1,0 +1,16 @@
+  type: object
+  required:
+    - status
+    - message
+    - timestamp
+  properties:
+    status:
+      type: integer
+      example: 404
+    message:
+      type: string
+      example: "Invoice not found with UUID: a1b2c3d4-e5f6-7890-abcd-ef0123456789"
+    timestamp:
+      type: string
+      format: date-time
+      example: "2026-06-06T12:00:00Z"

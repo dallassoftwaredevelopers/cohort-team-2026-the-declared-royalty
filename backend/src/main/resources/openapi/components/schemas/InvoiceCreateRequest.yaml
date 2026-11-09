@@ -1,0 +1,40 @@
+  type: object
+  required:
+    - mappingUuid
+  properties:
+    mappingUuid:
+      type: string
+      format: uuid
+      description: Required reference to an existing property_vendor_mapping
+      example: "f9e8d7c6-b5a4-3210-fedc-ba9876543210"
+    vendorSuppliedInvoiceId:
+      type: string
+      maxLength: 100
+      description: Invoice identifier assigned by the vendor
+    billingPeriodStart:
+      type: string
+      format: date
+    billingPeriodEnd:
+      type: string
+      format: date
+    invoiceCreationDate:
+      type: string
+      format: date
+    amount:
+      type: number
+      multipleOf: 0.01
+      minimum: -99999999.99
+      maximum: 99999999.99
+      description: Invoice amount with precision to two decimal places
+    dueDate:
+      type: string
+      format: date
+    invoiceStatus:
+      $ref: './InvoiceStatus.yaml'
+    blobFileUrl:
+      type: string
+      maxLength: 1000
+    blobFileSha256:
+      type: string
+      maxLength: 100
+      pattern: '^[A-Fa-f0-9]{64}$'
