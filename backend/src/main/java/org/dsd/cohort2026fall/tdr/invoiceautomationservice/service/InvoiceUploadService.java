@@ -49,10 +49,6 @@ public class InvoiceUploadService {
             "jpg", "image/jpeg"
     );
 
-    public Map<String, String> getContentTypes() {
-        return CONTENT_TYPES;
-    }
-
     private final InvoiceRepository invoiceRepository;
     private final DocumentStorageService storageService;
     private final AuditLogService auditLogService;

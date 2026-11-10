@@ -14,7 +14,7 @@ public class OpenApiToMapService {
 
         LoaderOptions options = new LoaderOptions();
         Yaml yaml = new Yaml(new SafeConstructor(options));
-        String filename = "OpenAiResponse";
+        String filename = "InvoiceAnalysisResponse";
 
         // Using the current Thread's classloader removes the need for any specific class name reference
         try (InputStream inputStream = Thread.currentThread()

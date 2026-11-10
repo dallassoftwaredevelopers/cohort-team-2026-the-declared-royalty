@@ -6,8 +6,10 @@ import com.openai.models.responses.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
@@ -23,7 +25,7 @@ public class InvoiceAnalysisService {
     private final InvoiceUploadService invoiceUploadService;
     private final OpenApiToMapService openApiToMapService;
 
-//    sends a request to the AI model to analyze the invoice (based on its UUID within the blob storage) and returns the extracted values as a string
+//    sends a request to the AI model to analyze the invoice and returns the extracted values as a string
     public String analyzeInvoice(UUID invoiceId) {
         ResponseCreateParams requestParams = getRequestParams(invoiceUploadService.loadFile(invoiceId));
         return client.responses().create(requestParams).output().stream()
@@ -69,7 +71,7 @@ public class InvoiceAnalysisService {
                                                     .name("invoiceValues")
                                                     .strict(true)
                                                     .schema(
-//                                                          Schema structure is defined in openAPI documentation at "src/main/resources/openapi/components/schemas/OpenAiResponse.yaml"
+//                                                          Schema structure is defined in openAPI documentation at "src/main/resources/openapi/components/schemas/InvoiceAnalysisResponse.yaml"
                                                             Objects.requireNonNull(JsonValue.from(openApiToMapService.convertOpenApiToMap())
                                                                     .convert(ResponseFormatTextJsonSchemaConfig.Schema.class)))
                                                     .build())
@@ -97,19 +99,12 @@ public class InvoiceAnalysisService {
 //    converts the invoice file into a base64-encoded data URL for sending to the AI model
     private String getInvoiceBase64DataUrl(InvoiceUploadService.InvoiceFile invoiceFile){
         byte[] data;
-        try{
-            InputStream stream = invoiceFile.content();
+        try(InputStream stream = invoiceFile.content()){
             data = stream.readAllBytes();
-            stream.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return "data:"+ getType(invoiceFile.filename()) + ";base64," + java.util.Base64.getEncoder().encodeToString(data);
-    }
-
-    private String getType(String filename) {
-        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-        return invoiceUploadService.getContentTypes().getOrDefault(extension, "application/octet-stream");
+        return "data:"+ invoiceFile.contentType() + ";base64," + java.util.Base64.getEncoder().encodeToString(data);
     }
 
 }

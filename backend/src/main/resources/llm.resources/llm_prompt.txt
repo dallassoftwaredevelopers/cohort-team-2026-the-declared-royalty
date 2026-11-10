@@ -8,6 +8,10 @@ following information:
 3. Total amount due
 4. Payment due date
 5. Invoice number
+6. Account number
+7. Billing period start
+8. Billing period end
+9. Invoice issued date
 
 Instructions:
 
@@ -18,3 +22,8 @@ Instructions:
 - Distinguish the billing address from the service/property address.
 - Return the total amount due, not the minimum payment or previous balance.
 - Do not include explanations or commentary.
+- All dates should be formatted as YYYY-MM-DD.
+
+
+Instructions for error:
+- Only provide an error message if there is a cause. If there was no error, the value for the error field should be null    .
