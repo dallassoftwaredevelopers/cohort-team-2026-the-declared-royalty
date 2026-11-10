@@ -1,7 +1,6 @@
 type: object
 required:
   - invoiceUuid
-  - mappingUuid
   - invoiceStatus
   - createdAt
   - updatedAt
@@ -13,7 +12,34 @@ properties:
   mappingUuid:
     type: string
     format: uuid
+    nullable: true
+    description: Null until the invoice is matched to a property-vendor mapping (e.g. right after upload)
     example: "f9e8d7c6-b5a4-3210-fedc-ba9876543210"
+  vendorUuid:
+    type: string
+    format: uuid
+    nullable: true
+  vendorName:
+    type: string
+    nullable: true
+    example: "Northline Electric"
+  vendorAccountNumber:
+    type: string
+    nullable: true
+    example: "2000456700"
+  propertyUuid:
+    type: string
+    format: uuid
+    nullable: true
+  propertyName:
+    type: string
+    nullable: true
+    example: "Industrial Business Park"
+  originalFilename:
+    type: string
+    nullable: true
+    description: Filename the invoice was uploaded with; null for manually entered invoices
+    example: "northline-bill.pdf"
   vendorSuppliedInvoiceId:
     type: string
     nullable: true

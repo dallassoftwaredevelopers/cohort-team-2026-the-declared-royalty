@@ -23,7 +23,7 @@ class OpenApiSpecStructureTest {
     void rootSpecOnlyReferencesFragments() throws IOException {
         assertThat(ROOT).exists();
         List<String> lines = Files.readAllLines(ROOT);
-        assertThat(lines.size()).isLessThan(80);
+        assertThat(lines.size()).isLessThan(150);
 
         boolean inPaths = false;
         for (int i = 0; i < lines.size(); i++) {

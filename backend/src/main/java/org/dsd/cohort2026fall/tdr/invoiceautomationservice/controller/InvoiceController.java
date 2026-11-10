@@ -1,15 +1,14 @@
 package org.dsd.cohort2026fall.tdr.invoiceautomationservice.controller;
 
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.api.InvoicesApi;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceCreateRequest;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoicePageResponse;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceResponse;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceUpdateRequest;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.service.InvoiceService;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -26,8 +25,13 @@ public class InvoiceController implements InvoicesApi {
     }
 
     @Override
-    public ResponseEntity<InvoicePageResponse> getAllInvoices(Integer page, Integer size) {
-        return ResponseEntity.ok(invoiceService.getInvoices(page, size));
+    public ResponseEntity<InvoicePageResponse> getAllInvoices(Integer page, Integer size, List<InvoiceStatus> status, String q) {
+        return ResponseEntity.ok(invoiceService.getInvoices(page, size, status, q));
+    }
+
+    @Override
+    public ResponseEntity<InvoiceSummaryResponse> getInvoiceSummary(OffsetDateTime receivedSince) {
+        return ResponseEntity.ok(invoiceService.getSummary(receivedSince));
     }
 
     @Override

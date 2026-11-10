@@ -19,6 +19,19 @@ get:
         minimum: 1
         maximum: 100
         default: 20
+    - name: status
+      in: query
+      description: Only return invoices in one of these statuses. Repeat the parameter for several (status=INGESTED&status=FAILED).
+      schema:
+        type: array
+        items:
+          $ref: '../components/schemas/InvoiceStatus.yaml'
+    - name: q
+      in: query
+      description: Case-insensitive search across vendor invoice number, vendor name, property name and original filename
+      schema:
+        type: string
+        maxLength: 100
   responses:
     '200':
       description: Successfully retrieved a page of invoices
