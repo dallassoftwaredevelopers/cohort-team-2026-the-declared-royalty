@@ -21,6 +21,14 @@ properties:
         $ref: '#/$defs/StringField'
       invoice_number:
         $ref: '#/$defs/StringField'
+      account_number:
+        $ref: '#/$defs/StringField'
+      billing_period_start:
+        $ref: '#/$defs/StringField'
+      billing_period_end:
+        $ref: '#/$defs/StringField'
+      invoice_issued_date:
+        $ref: '#/$defs/StringField'
     required:
       - vendor_name
       - property_address
@@ -28,6 +36,10 @@ properties:
       - total_amount_due
       - payment_due_date
       - invoice_number
+      - account_number
+      - billing_period_start
+      - billing_period_end
+      - invoice_issued_date
 required:
   - error
   - extractedValues
