@@ -26,6 +26,8 @@ paths:
     $ref: './paths/audit_logs_by_id.yaml'
   /api/v1/invoices:
     $ref: './paths/invoices.yaml'
+  /api/v1/invoices/summary:
+    $ref: './paths/invoices_summary.yaml'
   /api/v1/invoices/{invoiceUuid}:
     $ref: './paths/invoices_by_id.yaml'
   /api/v1/invoices/upload:
@@ -77,3 +79,5 @@ components:
       $ref: './components/schemas/InvoicePageResponse.yaml'
     InvoiceStatus:
       $ref: './components/schemas/InvoiceStatus.yaml'
+    InvoiceSummaryResponse:
+      $ref: './components/schemas/InvoiceSummaryResponse.yaml'

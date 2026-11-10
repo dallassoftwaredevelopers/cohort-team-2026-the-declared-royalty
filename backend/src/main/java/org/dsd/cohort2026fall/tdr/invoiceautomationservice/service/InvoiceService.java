@@ -1,31 +1,45 @@
 package org.dsd.cohort2026fall.tdr.invoiceautomationservice.service;
 
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Predicate;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.InvoiceEntity;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.PropertyEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.PropertyVendorMappingEntity;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.entity.VendorEntity;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvoiceAlreadyExistsException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.InvalidInvoiceException;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.ResourceNotFoundException;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceCreateRequest;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoicePageResponse;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceResponse;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceStatus;
-import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceUpdateRequest;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.*;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.InvoiceRepository;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.repository.PropertyVendorMappingRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class InvoiceService {
+
+    // Still moving through the pipeline. APPROVED, PAID and VOID are past the processing queue.
+    // The frontend's "All pending" tab (features/invoices/invoiceStatus.ts) uses the same list.
+    static final List<String> PENDING_STATUSES = List.of(
+        InvoiceStatus.INGESTED.getValue(),
+        InvoiceStatus.PENDING_MAPPING.getValue(),
+        InvoiceStatus.PENDING_APPROVAL.getValue(),
+        InvoiceStatus.PROCESSING_PAYMENT.getValue(),
+        InvoiceStatus.FAILED.getValue());
 
     private final InvoiceRepository invoiceRepository;
     private final PropertyVendorMappingRepository mappingRepository;
@@ -38,8 +52,9 @@ public class InvoiceService {
     }
 
     @Transactional(readOnly = true)
-    public InvoicePageResponse getInvoices(int page, int size) {
+    public InvoicePageResponse getInvoices(int page, int size, List<InvoiceStatus> statuses, String search) {
         Page<InvoiceEntity> invoicePage = invoiceRepository.findAll(
+                matching(statuses, search),
                 PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("invoiceId"))));
 
         InvoicePageResponse response = new InvoicePageResponse();
@@ -49,6 +64,24 @@ public class InvoiceService {
         response.setTotalElements(invoicePage.getTotalElements());
         response.setTotalPages(invoicePage.getTotalPages());
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public InvoiceSummaryResponse getSummary(OffsetDateTime receivedSince) {
+        String needsReview = InvoiceStatus.PENDING_MAPPING.getValue();
+        String awaitingApproval = InvoiceStatus.PENDING_APPROVAL.getValue();
+
+        InvoiceSummaryResponse summary = new InvoiceSummaryResponse();
+        summary.setPendingCount(invoiceRepository.countByInvoiceStatusIn(PENDING_STATUSES));
+        summary.setPendingPropertyCount(invoiceRepository.countDistinctPropertiesByInvoiceStatusIn(PENDING_STATUSES));
+        summary.setNeedsReviewCount(invoiceRepository.countByInvoiceStatus(needsReview));
+        summary.setNeedsReviewReceivedSince(receivedSince == null
+                ? 0L
+                : invoiceRepository.countByInvoiceStatusAndCreatedAtGreaterThanEqual(needsReview, receivedSince));
+        summary.setAwaitingApprovalCount(invoiceRepository.countByInvoiceStatus(awaitingApproval));
+        summary.setAwaitingApprovalTotal(invoiceRepository.sumAmountByInvoiceStatus(awaitingApproval));
+        summary.setExceptionsCount(invoiceRepository.countByInvoiceStatus(InvoiceStatus.FAILED.getValue()));
+        return summary;
     }
 
     @Transactional(readOnly = true)
@@ -171,6 +204,36 @@ public class InvoiceService {
         }
     }
 
+    private static Specification<InvoiceEntity> matching(List<InvoiceStatus> statuses, String search) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (statuses != null && !statuses.isEmpty()) {
+                predicates.add(root.get("invoiceStatus").in(statuses.stream().map(InvoiceStatus::getValue).toList()));
+            }
+
+            if (search != null && !search.isBlank()) {
+                String pattern = "%" + escapeLike(search.trim().toLowerCase(Locale.ROOT)) + "%";
+                // LEFT joins so unmapped invoices (no vendor or property yet) can still match on filename
+                Join<InvoiceEntity, PropertyVendorMappingEntity> mapping = root.join("mapping", JoinType.LEFT);
+                Join<PropertyVendorMappingEntity, VendorEntity> vendor = mapping.join("vendor", JoinType.LEFT);
+                Join<PropertyVendorMappingEntity, PropertyEntity> property = mapping.join("property", JoinType.LEFT);
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("vendorSuppliedInvoiceId")), pattern, '\\'),
+                        cb.like(cb.lower(root.get("originalFilename")), pattern, '\\'),
+                        cb.like(cb.lower(vendor.get("name")), pattern, '\\'),
+                        cb.like(cb.lower(property.get("name")), pattern, '\\')));
+            }
+
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
+    // Treat % and _ typed by the user as literal characters, not wildcards
+    private static String escapeLike(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
     private OffsetDateTime now() {
         return OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
     }
@@ -178,7 +241,20 @@ public class InvoiceService {
     private InvoiceResponse toResponse(InvoiceEntity entity) {
         InvoiceResponse response = new InvoiceResponse();
         response.setInvoiceUuid(entity.getInvoiceId());
-        response.setMappingUuid(entity.getMapping().getMappingId());
+        PropertyVendorMappingEntity mapping = entity.getMapping();
+        if (mapping != null) {
+            response.setMappingUuid(mapping.getMappingId());
+            response.setVendorAccountNumber(mapping.getVendorAccountNumber());
+            if (mapping.getVendor() != null) {
+                response.setVendorUuid(mapping.getVendor().getVendorId());
+                response.setVendorName(mapping.getVendor().getName());
+            }
+            if (mapping.getProperty() != null) {
+                response.setPropertyUuid(mapping.getProperty().getPropertyId());
+                response.setPropertyName(mapping.getProperty().getName());
+           }
+        }
+        response.setOriginalFilename(entity.getOriginalFilename());
         response.setVendorSuppliedInvoiceId(entity.getVendorSuppliedInvoiceId());
         response.setBillingPeriodStart(entity.getBillingPeriodStart());
         response.setBillingPeriodEnd(entity.getBillingPeriodEnd());

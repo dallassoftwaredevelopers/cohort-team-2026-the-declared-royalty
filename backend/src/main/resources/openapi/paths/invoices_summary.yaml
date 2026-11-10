@@ -1,0 +1,25 @@
+get:
+  tags:
+    - Invoices
+  summary: Get invoice counts for the processing dashboard
+  operationId: getInvoiceSummary
+  parameters:
+    - name: receivedSince
+      in: query
+      description: Start of the caller's "today" (e.g. local midnight), used for needsReviewReceivedSince
+      schema:
+        type: string
+        format: date-time
+  responses:
+    '200':
+      description: Invoice counts
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/InvoiceSummaryResponse.yaml'
+    '400':
+      description: Invalid receivedSince
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/ErrorResponse.yaml'

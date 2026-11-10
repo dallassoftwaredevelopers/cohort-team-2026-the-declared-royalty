@@ -4,6 +4,7 @@ import org.dsd.cohort2026fall.tdr.invoiceautomationservice.exception.GlobalExcep
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoicePageResponse;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceResponse;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceStatus;
+import org.dsd.cohort2026fall.tdr.invoiceautomationservice.model.InvoiceSummaryResponse;
 import org.dsd.cohort2026fall.tdr.invoiceautomationservice.service.InvoiceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +14,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -43,13 +44,57 @@ class InvoiceControllerTest {
     void getInvoicesUsesDefaultPageAndSize() throws Exception {
         InvoiceResponse invoice = invoiceResponse(UUID.randomUUID(), UUID.randomUUID());
         InvoicePageResponse page = new InvoicePageResponse(List.of(invoice), 0, 20, 1L, 1);
-        when(invoiceService.getInvoices(0, 20)).thenReturn(page);
+        when(invoiceService.getInvoices(eq(0), eq(20), isNull(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/invoices"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].invoiceUuid").value(invoice.getInvoiceUuid().toString()))
                 .andExpect(jsonPath("$.page").value(0))
                 .andExpect(jsonPath("$.size").value(20));
+    }
+
+    @Test
+    void getInvoicesPassesStatusFiltersAndSearch() throws Exception {
+        InvoicePageResponse page = new InvoicePageResponse(List.of(), 0, 20, 0L, 0);
+        List<InvoiceStatus> statuses = List.of(InvoiceStatus.INGESTED, InvoiceStatus.PROCESSING_PAYMENT);
+        when(invoiceService.getInvoices(0, 20, statuses, "northline")).thenReturn(page);
+
+        mockMvc.perform(get("/api/v1/invoices")
+                        .param("status", "INGESTED", "PROCESSING_PAYMENT")
+                        .param("q", "northline"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        verify(invoiceService).getInvoices(0, 20, statuses, "northline");
+    }
+
+    @Test
+    void getInvoicesRejectsUnknownStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/invoices").param("status", "NOT_A_STATUS"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(invoiceService);
+    }
+
+    @Test
+    void getInvoiceSummaryReturnsCounts() throws Exception {
+        OffsetDateTime since = OffsetDateTime.parse("2026-11-09T06:00:00Z");
+        InvoiceSummaryResponse summary = new InvoiceSummaryResponse();
+        summary.setPendingCount(24L);
+        summary.setPendingPropertyCount(8L);
+        summary.setNeedsReviewCount(7L);
+        summary.setNeedsReviewReceivedSince(3L);
+        summary.setAwaitingApprovalCount(5L);
+        summary.setAwaitingApprovalTotal(new BigDecimal("18642.00"));
+        summary.setExceptionsCount(2L);
+        when(invoiceService.getSummary(since)).thenReturn(summary);
+
+        mockMvc.perform(get("/api/v1/invoices/summary").param("receivedSince", "2026-11-09T06:00:00Z"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pendingCount").value(24))
+                .andExpect(jsonPath("$.needsReviewReceivedSince").value(3))
+                .andExpect(jsonPath("$.awaitingApprovalTotal").value(18642.00))
+                .andExpect(jsonPath("$.exceptionsCount").value(2));
     }
 
     @Test

@@ -1,0 +1,39 @@
+type: object
+description: Counts for the invoice processing dashboard cards
+required:
+  - pendingCount
+  - pendingPropertyCount
+  - needsReviewCount
+  - needsReviewReceivedSince
+  - awaitingApprovalCount
+  - awaitingApprovalTotal
+  - exceptionsCount
+properties:
+  pendingCount:
+    type: integer
+    format: int64
+    description: Invoices not yet APPROVED, PAID or VOID
+  pendingPropertyCount:
+    type: integer
+    format: int64
+    description: Distinct properties across pending invoices (unmapped invoices are not counted)
+  needsReviewCount:
+    type: integer
+    format: int64
+    description: Invoices in PENDING_MAPPING
+  needsReviewReceivedSince:
+    type: integer
+    format: int64
+    description: PENDING_MAPPING invoices created at or after receivedSince (0 when receivedSince is not sent)
+  awaitingApprovalCount:
+    type: integer
+    format: int64
+    description: Invoices in PENDING_APPROVAL
+  awaitingApprovalTotal:
+    type: number
+    multipleOf: 0.01
+    description: Sum of amounts for PENDING_APPROVAL invoices
+  exceptionsCount:
+    type: integer
+    format: int64
+    description: Invoices in FAILED
