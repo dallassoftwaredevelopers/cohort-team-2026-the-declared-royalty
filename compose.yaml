@@ -6,7 +6,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: invoice-automation-backend
     environment:
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
@@ -16,10 +15,10 @@ services:
       MINIO_ENDPOINT: http://minio:9000
       MINIO_USER: ${MINIO_USER}
       MINIO_PASSWORD: ${MINIO_PASSWORD}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:${FRONTEND_PORT:-5173}}
       LLM_API_KEY: ${LLM_API_KEY}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,18 +28,18 @@ services:
       - backend
 
   # --- Frontend Layer ---
-  # Enable one via COMPOSE_PROFILES in .env (dev or prod); both use port 5173
+  # Enable one via COMPOSE_PROFILES in .env (dev or prod); both use port 5173 by default
   frontend-dev:
     profiles: ["dev"]
     build:
       context: ./frontend
       dockerfile: Dockerfile
       target: dev
-    container_name: invoice-automation-frontend-dev
     environment:
       VITE_USE_POLLING: "true"
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:${BACKEND_PORT:-8080}}
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT:-5173}:5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules # keep the container's Linux node_modules
@@ -55,9 +54,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: prod
-    container_name: invoice-automation-frontend
     ports:
-      - "5173:80"
+      - "${FRONTEND_PROD_PORT:-5173}:80"
     depends_on:
       backend:
         condition: service_started
@@ -66,13 +64,12 @@ services:
   # --- Database Layer ---
   postgres:
     image: postgres:16-alpine
-    container_name: invoice-automation-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -86,12 +83,11 @@ services:
   # --- Database Admin Layer ---
   pgadmin:
     image: dpage/pgadmin4:9.18
-    container_name: invoice-automation-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
-      - "5050:80"
+      - "${PGADMIN_PORT:-5050}:80"
     depends_on:
       postgres:
         condition: service_healthy
@@ -103,10 +99,9 @@ services:
   # --- Object Storage Layer (Blob) ---
   minio:
     image: public.ecr.aws/y9w4h2u9/minio:RELEASE.2025-09-07T16-13-09Z # Stable 2025 release
-    container_name: invoice-blob-storage
     ports:
-      - "9000:9000" # MinIO API Port
-      - "9001:9001" # MinIO Web Console Port
+      - "${MINIO_PORT:-9000}:9000" # MinIO API Port
+      - "${MINIO_CONSOLE_PORT:-9001}:9001" # MinIO Web Console Port
     environment:
       MINIO_ROOT_USER: ${MINIO_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
