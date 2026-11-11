@@ -4,9 +4,10 @@ import {
   getAuditLogById,
   getAuditLogs,
 } from "@/features/auditLogs/auditLogService";
+import { API_BASE_URL } from "@/app/services/apiClient";
 import type { AuditLogCreateRequest, AuditLogsResponse } from "@/types/auditlogs";
 
-const BASE_URL = "http://localhost:8080/api/v1/audit-logs";
+const BASE_URL = `${API_BASE_URL}/api/v1/audit-logs`;
 const AUDIT_ID = "3f1c2a9e-5b7d-4e8f-9a0b-1c2d3e4f5a6b";
 const INVOICE_ID = "7b8a9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d";
 const USER_ID = "6aabd049-1200-4b71-b72f-1e24907045d7";

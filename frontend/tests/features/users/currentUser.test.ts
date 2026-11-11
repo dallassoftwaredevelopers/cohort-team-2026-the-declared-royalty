@@ -7,9 +7,10 @@ import {
   SYSTEM_USER_ID,
 } from "@/features/users/useCurrentUser";
 import { getDisplayName, getInitials } from "@/features/users/userDisplay";
+import { API_BASE_URL } from "@/app/services/apiClient";
 import type { UserResponse } from "@/types/user";
 
-const BASE_URL = "http://localhost:8080/api/v1/users";
+const BASE_URL = `${API_BASE_URL}/api/v1/users`;
 
 const makeUser = (overrides: Partial<UserResponse>): UserResponse => ({
   userId: "6aabd049-1200-4b71-b72f-1e24907045d7",

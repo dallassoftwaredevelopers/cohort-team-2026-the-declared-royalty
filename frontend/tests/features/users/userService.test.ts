@@ -6,9 +6,10 @@ import {
   getUsers,
   updateUserByUserId,
 } from "@/features/users/userService";
+import { API_BASE_URL } from "@/app/services/apiClient";
 import type { UserResponse } from "@/types/user";
 
-const BASE_URL = "http://localhost:8080/api/v1/users";
+const BASE_URL = `${API_BASE_URL}/api/v1/users`;
 const USER_ID = "6aabd049-1200-4b71-b72f-1e24907045d7";
 
 const user: UserResponse = {
